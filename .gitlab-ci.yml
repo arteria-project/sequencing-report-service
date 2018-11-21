@@ -16,7 +16,7 @@ cache:
 
 before_script:
   - python -V               # Print out python version for debugging
-  - conda create -y -p ./environment python=3
+  - conda create -y -p ./environment python=3.7
   - source activate ./environment
   # Conda needs to install virtualenv for tox to work
   - conda install virtualenv
