@@ -18,6 +18,7 @@ before_script:
   - python -V               # Print out python version for debugging
   - conda create -y -p ./environment python=3 
   - source activate ./environment
+  - pip install requirements_dev.txt 
 
 test:
   script:
