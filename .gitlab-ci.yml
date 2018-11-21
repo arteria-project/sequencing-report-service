@@ -18,6 +18,8 @@ before_script:
   - python -V               # Print out python version for debugging
   - conda create -y -p ./environment python=3
   - source activate ./environment
+  # Conda needs to install virtualenv for tox to work
+  - conda install virtualenv
   - pip install -r requirements_dev.txt
 
 test:
