@@ -41,10 +41,9 @@ run:
 pages:
   script:
   - pip install sphinx sphinx-rtd-theme
-  - cd doc ; make docs
-  - mv build/html/ ../public/
+  - make docs
   artifacts:
     paths:
-    - public
+    - docs/_build/html/
   only:
   - master
