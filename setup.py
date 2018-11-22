@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-requirements = [ ]
+requirements = ['arteria']
 
 setup_requirements = ['pytest-runner', ]
 
@@ -40,4 +40,8 @@ setup(
     url='https://gitlab.snpseq.medsci.uu.se/shared/sequencing-report-service/sequencing_report_service',
     version='0.1.0',
     zip_safe=False,
+    entry_points={
+        'console_scripts': ['sequencing-report-service = sequencing_report_service.app:start']
+    },
+
 )
