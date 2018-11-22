@@ -1,5 +1,3 @@
-import json
-
 from arteria.web.handlers import BaseRestHandler
 
 from sequencing_report_service import __version__ as version

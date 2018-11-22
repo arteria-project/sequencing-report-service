@@ -18,12 +18,11 @@ def routes(**kwargs):
         url(r"/api/1.0/version", VersionHandler, name="version", kwargs=kwargs),
     ]
 
+
 def start():
     """
     Start the delivery-ws app
     """
     app_svc = AppService.create(__package__)
     config = app_svc.config_svc
-    route_config = {}
-    app_svc.start(routes(**route_config))
-
+    app_svc.start(routes(**config))
