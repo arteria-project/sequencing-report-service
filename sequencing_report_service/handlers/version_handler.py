@@ -8,6 +8,9 @@ class VersionHandler(BaseRestHandler):
     Get the version of the service
     """
 
+    def initialize(self, **kwargs):
+        pass
+
     def get(self):
         """
         Returns the version of the checksum-service as json. Format looks as follows:

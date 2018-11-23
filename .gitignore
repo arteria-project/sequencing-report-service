@@ -2,6 +2,8 @@
 docs/sequencing_report_service.rst
 docs/modules.rst
 
+# Ignore default database
+sequencing_reports.db
 
 # PyCharm
 .idea/
