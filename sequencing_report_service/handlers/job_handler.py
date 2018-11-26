@@ -1,7 +1,7 @@
 
 from arteria.web.handlers import BaseRestHandler
 
-from sequencing_report_service.handlers import ACCEPTED
+from sequencing_report_service.handlers import ACCEPTED, NOT_FOUND
 
 
 class OneJobHandler(BaseRestHandler):
@@ -20,8 +20,11 @@ class OneJobHandler(BaseRestHandler):
         }
         """
         job = self.runner_service.get_job(job_id)
-        job_as_dicts = job.to_dict()
-        self.write_object(job_as_dicts)
+        if job:
+            job_as_dicts = job.to_dict()
+            self.write_object(job_as_dicts)
+        else:
+            self.set_status(NOT_FOUND)
 
 
 class ManyJobHandler(BaseRestHandler):
