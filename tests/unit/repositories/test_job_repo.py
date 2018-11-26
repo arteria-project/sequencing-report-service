@@ -59,4 +59,3 @@ class TestJobRepo(object):
         job_again = repo.get_one_pending_job()
 
         assert job_again is None
-

@@ -1,7 +1,7 @@
 
 from arteria.web.handlers import BaseRestHandler
 
-from sequencing_report_service.handlers import *
+from sequencing_report_service.handlers import ACCEPTED
 
 
 class OneJobHandler(BaseRestHandler):

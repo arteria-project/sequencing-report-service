@@ -79,4 +79,3 @@ def start(package=__package__):
     app_svc = AppService.create(package)
     config = app_svc.config_svc
     app_svc.start(compose_application(config))
-

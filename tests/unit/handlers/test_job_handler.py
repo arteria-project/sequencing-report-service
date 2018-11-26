@@ -40,4 +40,3 @@ class TestJobHandler(AsyncHTTPTestCase):
         self.assertDictEqual(json.loads(response.body),
                              {'link':
                               'http://127.0.0.1:{}/api/1.0/jobs/{}'.format(self.get_http_port(), 1)})
-

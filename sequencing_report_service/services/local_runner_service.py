@@ -68,4 +68,3 @@ class LocalRunnerService(object):
                 self._start_process(job)
             else:
                 log.debug("No pending jobs found.")
-
