@@ -14,7 +14,8 @@ from tornado.ioloop import PeriodicCallback
 from arteria.web.app import AppService
 
 from sequencing_report_service.handlers.version_handler import VersionHandler
-from sequencing_report_service.handlers.job_handler import OneJobHandler, ManyJobHandler, JobStartHandler
+from sequencing_report_service.handlers.job_handler import OneJobHandler, ManyJobHandler,\
+    JobStartHandler, JobStopHandler
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.job_repo import JobRepository
 
@@ -31,6 +32,7 @@ def routes(**kwargs):
     return [
         url(r"/api/1.0/version", VersionHandler, name="version", kwargs=kwargs),
         url(r"/api/1.0/jobs/start/(?!.*\/)(.*)$", JobStartHandler, name="job_start", kwargs=kwargs),
+        url(r"/api/1.0/jobs/stop/(\d+)$", JobStopHandler, name="job_stop", kwargs=kwargs),
         url(r"/api/1.0/jobs/(\d+)$", OneJobHandler, name="one_job", kwargs=kwargs),
         url(r"/api/1.0/jobs/$", ManyJobHandler, name="many_jobs", kwargs=kwargs)
     ]

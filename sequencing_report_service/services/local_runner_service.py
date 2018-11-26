@@ -1,6 +1,8 @@
 
 import logging
 import subprocess
+import os
+import signal
 
 from sequencing_report_service.models.db_models import Status
 
@@ -47,6 +49,23 @@ class LocalRunnerService(object):
                 self._currently_running_job = None
         else:
             log.debug("Found no return code for process: {}. Will keep polling later".format(command))
+
+    def stop(self, job_id):
+        job = self._job_repo.get_job(job_id)
+        if job and job.status == Status.PENDING:
+            log.info("Found pending job: {}. Will set its status to cancelled.".format(job))
+            self._job_repo.set_state_of_job(job_id, Status.CANCELLED)
+            return job
+        if job and job.status == Status.STARTED:
+            log.info("Will stop the currently running job.")
+            current_pid = self._currently_running_job.process.pid
+            os.kill(current_pid, signal.SIGTERM)
+            self._job_repo.set_state_of_job(job_id, Status.CANCELLED)
+            self._currently_running_job = None
+            return job
+        else:
+            log.debug("Found no job to cancel with with job id: {}. Or it was not in a cancellable state.")
+            return job
 
     def schedule(self, runfolder):
         return self._job_repo.add_job(runfolder=runfolder)

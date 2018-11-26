@@ -58,3 +58,25 @@ class JobStartHandler(BaseRestHandler):
         self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
                                                       self.request.host,
                                                       self.reverse_url('one_job', job.job_id))})
+
+
+class JobStopHandler(BaseRestHandler):
+    """
+    Handle stopping jobs
+    """
+
+    def initialize(self, **kwargs):
+        self.runner_service = kwargs['runner_service']
+
+    def post(self, job_id):
+        """
+        TODO
+        {
+           "TODO": "TODO"
+        }
+        """
+        job = self.runner_service.stop(job_id)
+        self.set_status(status_code=ACCEPTED)
+        self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
+                                                      self.request.host,
+                                                      self.reverse_url('one_job', job.job_id))})

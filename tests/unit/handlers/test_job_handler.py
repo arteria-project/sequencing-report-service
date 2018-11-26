@@ -19,6 +19,7 @@ class TestJobHandler(AsyncHTTPTestCase):
         mock_runner_service.get_jobs = mock.MagicMock(return_value=[job])
         mock_runner_service.get_job = mock.MagicMock(return_value=job)
         mock_runner_service.schedule = mock.MagicMock(return_value=job)
+        mock_runner_service.stop = mock.MagicMock(return_value=job)
 
         return Application(routes(runner_service=mock_runner_service))
 
@@ -40,3 +41,9 @@ class TestJobHandler(AsyncHTTPTestCase):
         self.assertDictEqual(json.loads(response.body),
                              {'link':
                               'http://127.0.0.1:{}/api/1.0/jobs/{}'.format(self.get_http_port(), 1)})
+
+    def test_stop_job(self):
+        response = self.fetch('/api/1.0/jobs/stop/1', method='POST', body=json.dumps({}))
+        self.assertEqual(response.code, 202)
+        self.assertDictEqual(json.loads(response.body),
+                             {'link': 'http://127.0.0.1:{}/api/1.0/jobs/{}'.format(self.get_http_port(), 1)})

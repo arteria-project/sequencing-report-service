@@ -26,3 +26,25 @@ class TestIntegration(AsyncHTTPTestCase):
         status_response = self.fetch(status_link)
         self.assertTrue(json.loads(status_response.body).get('job_id'))
         self.assertTrue(json.loads(status_response.body).get('status'))
+
+    def test_stop_job(self):
+        # First start the job
+        response = self.fetch('/api/1.0/jobs/start/foo', method='POST', body=json.dumps({}))
+        self.assertEqual(response.code, 202)
+        status_link = json.loads(response.body).get('link', None)
+        self.assertTrue(status_link)
+        status_response = self.fetch(status_link)
+        body_as_dict = json.loads(status_response.body)
+        self.assertTrue(body_as_dict.get('job_id'))
+        self.assertTrue(body_as_dict.get('status'))
+
+        # Then stop it
+        stop_response = self.fetch('/api/1.0/jobs/stop/{}'.format(body_as_dict['job_id']),
+                                   method='POST',
+                                   body=json.dumps({}))
+
+        self.assertEqual(stop_response.code, 202)
+
+        # And check its status
+        status_after_stop_respose = self.fetch(json.loads(stop_response.body)['link'])
+        self.assertEqual(json.loads(status_after_stop_respose.body)['status'], 'cancelled')
