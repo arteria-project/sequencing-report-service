@@ -41,5 +41,5 @@ class Job(SQLAlchemyBase):
     def to_dict(self):
         return {'job_id': self.job_id,
                 'runfolder': self.runfolder,
-                'pid': self.pid if self.pid else '',
+                'pid': self.pid if self.pid is not None else '',
                 'status': self.status.value}
