@@ -5,6 +5,7 @@ import os
 import signal
 
 from sequencing_report_service.models.db_models import Status
+from sequencing_report_service.exceptions import UnableToStopJob
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class LocalRunnerService(object):
             return job
         else:
             log.debug("Found no job to cancel with with job id: {}. Or it was not in a cancellable state.")
-            return job
+            raise UnableToStopJob()
 
     def schedule(self, runfolder):
         return self._job_repo.add_job(runfolder=runfolder)
