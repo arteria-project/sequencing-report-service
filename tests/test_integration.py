@@ -67,8 +67,9 @@ class TestIntegration(AsyncHTTPTestCase):
     def test_should_return_all_reports(self):
         response = self.fetch('/reports/foo_runfolder')
         self.assertEqual(response.code, 200)
-        self.assertDictEqual(json.loads(response.body),
-                             {'links':
-                                  ['http://127.0.0.1:{}/reports/foo_runfolder/v1/'.format(self.get_http_port()),
-                                   'http://127.0.0.1:{}/reports/foo_runfolder/current/'.format(self.get_http_port()),
-                                   'http://127.0.0.1:{}/reports/foo_runfolder/v2/'.format(self.get_http_port())]})
+        response_dict = json.loads(response.body)
+        self.assertTrue(response_dict.get('links'))
+        self.assertSetEqual(set(response_dict['links']),
+                            set(['http://127.0.0.1:{}/reports/foo_runfolder/v1/'.format(self.get_http_port()),
+                                 'http://127.0.0.1:{}/reports/foo_runfolder/current/'.format(self.get_http_port()),
+                                 'http://127.0.0.1:{}/reports/foo_runfolder/v2/'.format(self.get_http_port())]))
