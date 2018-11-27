@@ -1,4 +1,5 @@
 import json
+import codecs
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
@@ -46,5 +47,19 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(stop_response.code, 202)
 
         # And check its status
-        status_after_stop_respose = self.fetch(json.loads(stop_response.body)['link'])
-        self.assertEqual(json.loads(status_after_stop_respose.body)['status'], 'cancelled')
+        status_after_stop_response = self.fetch(json.loads(stop_response.body)['link'])
+        self.assertEqual(json.loads(status_after_stop_response.body)['status'], 'cancelled')
+
+    def test_should_return_report(self):
+        response = self.fetch('/reports/foo_runfolder/')
+        self.assertEqual(response.code, 200)
+        decoded_body = response.body.decode('UTF-8')
+        self.assertIn('MultiQC', decoded_body)
+        self.assertIn('VERSION2', decoded_body)
+
+    def test_should_return_specific_report(self):
+        response = self.fetch('/reports/foo_runfolder/v1')
+        self.assertEqual(response.code, 200)
+        decoded_body = response.body.decode('UTF-8')
+        self.assertIn('MultiQC', decoded_body)
+        self.assertIn('VERSION1', decoded_body)

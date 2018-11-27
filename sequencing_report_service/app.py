@@ -16,8 +16,10 @@ from arteria.web.app import AppService
 from sequencing_report_service.handlers.version_handler import VersionHandler
 from sequencing_report_service.handlers.job_handler import OneJobHandler, ManyJobHandler,\
     JobStartHandler, JobStopHandler
+from sequencing_report_service.handlers.reports_handler import ReportHandler
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.job_repo import JobRepository
+from sequencing_report_service.repositiories.reports_repo import ReportsRepository
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +36,11 @@ def routes(**kwargs):
         url(r"/api/1.0/jobs/start/(?!.*\/)(.*)$", JobStartHandler, name="job_start", kwargs=kwargs),
         url(r"/api/1.0/jobs/stop/(\d+)$", JobStopHandler, name="job_stop", kwargs=kwargs),
         url(r"/api/1.0/jobs/(\d+)$", OneJobHandler, name="one_job", kwargs=kwargs),
-        url(r"/api/1.0/jobs/$", ManyJobHandler, name="many_jobs", kwargs=kwargs)
+        url(r"/api/1.0/jobs/$", ManyJobHandler, name="many_jobs", kwargs=kwargs),
+        # Path is a required argument for the ReportsHandler (because it is subclassing the
+        # static content handler, but it is not used. We use the configured repositories
+        # to find the correct path for the report to serve. /JD 2018-11-27
+        url(r"/reports/(.*)", ReportHandler, name="reports", kwargs={**{'path': 'thisisnotused'}, **kwargs})
     ]
 
 
@@ -69,9 +75,12 @@ def compose_application(config):
     job_repo = JobRepository(session_factory)
     local_runner_service = LocalRunnerService(job_repo)
 
+    reports_repo = ReportsRepository(reports_search_path="./tests/resources/")
+
     PeriodicCallback(local_runner_service.process_job_queue, 10*1000).start()
     return routes(config=config,
-                  runner_service=local_runner_service)
+                  runner_service=local_runner_service,
+                  reports_repo=reports_repo)
 
 
 def start(package=__package__):
