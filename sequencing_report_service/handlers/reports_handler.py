@@ -17,7 +17,12 @@ class ReportHandler(StaticFileHandler):
         super(ReportHandler, self).initialize(path, default_filename=default_filename)
 
     def validate_absolute_path(self, root, absolute_path):
-        regex = r"^.+/" + re.escape(root) + r"/(\w+)/{0,1}(v\d|)$"
+        # This regex will match the following type of paths
+        # <path_to_root>/reports/foo_runfolder
+        # <path_to_root>/reports/foo_runfolder/v1
+        # if there is a version this will be in the second group,
+        # otherwise this will be empty.
+        regex = r"^.+/" + re.escape(root) + r"/(\w+)/{0,1}(v\d+|)$"
         matches = re.match(regex, absolute_path)
 
         runfolder = matches.group(1)
