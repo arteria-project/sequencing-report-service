@@ -4,26 +4,46 @@ import logging
 
 from tornado.web import StaticFileHandler, HTTPError
 
+from arteria.web.handlers import BaseRestHandler
+
 from sequencing_report_service.handlers import NOT_FOUND
 from sequencing_report_service.exceptions import RunfolderNotFound
 
 log = logging.getLogger(__name__)
 
 
-class ReportHandler(StaticFileHandler):
+class ReportsHandler(BaseRestHandler):
+
+    def initialize(self, reports_repo, **kwargs):
+        self._reports_repo = reports_repo
+
+    def get(self, runfolder):
+        report_versions = self._reports_repo.get_all_report_versions_for_runfolder(runfolder)
+        links = []
+        for version in report_versions:
+            links.append('{}://{}{}'.format(self.request.protocol,
+                                            self.request.host,
+                                            self.reverse_url('report', '{}/{}'.format(runfolder, version))))
+        self.write({'links': links})
+
+
+class ReportFileHandler(StaticFileHandler):
 
     def initialize(self, path, reports_repo, default_filename=None, **kwargs):
-        self.reports_repo = reports_repo
-        super(ReportHandler, self).initialize(path, default_filename=default_filename)
+        self._reports_repo = reports_repo
+        super(ReportFileHandler, self).initialize(path, default_filename=default_filename)
 
     def validate_absolute_path(self, root, absolute_path):
         # This regex will match the following type of paths
-        # <path_to_root>/reports/foo_runfolder
+        # <path_to_root>/reports/foo_runfolder/current
         # <path_to_root>/reports/foo_runfolder/v1
         # if there is a version this will be in the second group,
         # otherwise this will be empty.
-        regex = r"^.+/" + re.escape(root) + r"/(\w+)/{0,1}(v\d+|)$"
+        regex = r"^.+/" + re.escape(root) + r"/(\w+)/(v\d+|current)$"
         matches = re.match(regex, absolute_path)
+
+        if not matches:
+            raise HTTPError(NOT_FOUND)
 
         runfolder = matches.group(1)
         version = matches.group(2)
@@ -33,9 +53,9 @@ class ReportHandler(StaticFileHandler):
 
         try:
             if version:
-                report_path = str(self.reports_repo.get_report_with_version(runfolder, version))
+                report_path = str(self._reports_repo.get_report_with_version(runfolder, version))
             else:
-                report_path = str(self.reports_repo.get_current_report_for_runfolder(runfolder))
+                report_path = str(self._reports_repo.get_current_report_for_runfolder(runfolder))
         except RunfolderNotFound:
             raise HTTPError(NOT_FOUND)
 

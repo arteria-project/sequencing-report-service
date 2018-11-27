@@ -50,16 +50,25 @@ class TestIntegration(AsyncHTTPTestCase):
         status_after_stop_response = self.fetch(json.loads(stop_response.body)['link'])
         self.assertEqual(json.loads(status_after_stop_response.body)['status'], 'cancelled')
 
-    def test_should_return_report(self):
-        response = self.fetch('/reports/foo_runfolder/')
+    def test_should_return_current_report(self):
+        response = self.fetch('/reports/foo_runfolder/current/')
         self.assertEqual(response.code, 200)
         decoded_body = response.body.decode('UTF-8')
         self.assertIn('MultiQC', decoded_body)
         self.assertIn('VERSION2', decoded_body)
 
     def test_should_return_specific_report(self):
-        response = self.fetch('/reports/foo_runfolder/v1')
+        response = self.fetch('/reports/foo_runfolder/v1/')
         self.assertEqual(response.code, 200)
         decoded_body = response.body.decode('UTF-8')
         self.assertIn('MultiQC', decoded_body)
         self.assertIn('VERSION1', decoded_body)
+
+    def test_should_return_all_reports(self):
+        response = self.fetch('/reports/foo_runfolder')
+        self.assertEqual(response.code, 200)
+        self.assertDictEqual(json.loads(response.body),
+                             {'links':
+                                  ['http://127.0.0.1:{}/reports/foo_runfolder/v1/'.format(self.get_http_port()),
+                                   'http://127.0.0.1:{}/reports/foo_runfolder/current/'.format(self.get_http_port()),
+                                   'http://127.0.0.1:{}/reports/foo_runfolder/v2/'.format(self.get_http_port())]})

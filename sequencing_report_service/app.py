@@ -16,7 +16,7 @@ from arteria.web.app import AppService
 from sequencing_report_service.handlers.version_handler import VersionHandler
 from sequencing_report_service.handlers.job_handler import OneJobHandler, ManyJobHandler,\
     JobStartHandler, JobStopHandler
-from sequencing_report_service.handlers.reports_handler import ReportHandler
+from sequencing_report_service.handlers.reports_handler import ReportFileHandler,ReportsHandler
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.repositiories.reports_repo import ReportsRepository
@@ -37,10 +37,11 @@ def routes(**kwargs):
         url(r"/api/1.0/jobs/stop/(\d+)$", JobStopHandler, name="job_stop", kwargs=kwargs),
         url(r"/api/1.0/jobs/(\d+)$", OneJobHandler, name="one_job", kwargs=kwargs),
         url(r"/api/1.0/jobs/$", ManyJobHandler, name="many_jobs", kwargs=kwargs),
+        url(r"/reports/(?!.*\/)(.*)$", ReportsHandler, name="all_reports", kwargs=kwargs),
         # Path is a required argument for the ReportsHandler (because it is subclassing the
         # static content handler, but it is not used. We use the configured repositories
         # to find the correct path for the report to serve. /JD 2018-11-27
-        url(r"/reports/(.*)", ReportHandler, name="reports", kwargs={**{'path': 'thisisnotused'}, **kwargs})
+        url(r"/reports/(.*)/$", ReportFileHandler, name="report", kwargs={**{'path': 'thisisnotused'}, **kwargs})
     ]
 
 
