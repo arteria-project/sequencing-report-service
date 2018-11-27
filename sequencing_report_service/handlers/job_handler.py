@@ -9,8 +9,8 @@ class OneJobHandler(BaseRestHandler):
     Handle checking status of jobs
     """
 
-    def initialize(self, **kwargs):
-        self.runner_service = kwargs['runner_service']
+    def initialize(self, runner_service, **kwargs):
+        self.runner_service = runner_service
 
     def get(self, job_id):
         """
@@ -29,8 +29,8 @@ class OneJobHandler(BaseRestHandler):
 
 class ManyJobHandler(BaseRestHandler):
 
-    def initialize(self, **kwargs):
-        self.runner_service = kwargs['runner_service']
+    def initialize(self, runner_service, **kwargs):
+        self.runner_service = runner_service
 
     def get(self):
         jobs = self.runner_service.get_jobs()
@@ -43,8 +43,8 @@ class JobStartHandler(BaseRestHandler):
     Handle starting jobs
     """
 
-    def initialize(self, **kwargs):
-        self.runner_service = kwargs['runner_service']
+    def initialize(self, runner_service, **kwargs):
+        self.runner_service = runner_service
 
     def post(self, runfolder):
         """
