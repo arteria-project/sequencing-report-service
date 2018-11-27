@@ -16,7 +16,7 @@ from arteria.web.app import AppService
 from sequencing_report_service.handlers.version_handler import VersionHandler
 from sequencing_report_service.handlers.job_handler import OneJobHandler, ManyJobHandler,\
     JobStartHandler, JobStopHandler
-from sequencing_report_service.handlers.reports_handler import ReportFileHandler,ReportsHandler
+from sequencing_report_service.handlers.reports_handler import ReportFileHandler, ReportsHandler
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.repositiories.reports_repo import ReportsRepository
