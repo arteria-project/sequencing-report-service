@@ -1,8 +1,8 @@
-
 import enum as base_enum
 
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Enum, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import func
 
 from arteria.web.state import State
 
@@ -34,6 +34,8 @@ class Job(SQLAlchemyBase):
     runfolder = Column(String, nullable=False)
     pid = Column(Integer, nullable=True)
     status = Column(Enum(Status))
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    time_updated = Column(DateTime(timezone=True), onupdate=func.now())
 
     def __repr__(self):
         return str(self.__dict__)
@@ -42,4 +44,6 @@ class Job(SQLAlchemyBase):
         return {'job_id': self.job_id,
                 'runfolder': self.runfolder,
                 'pid': self.pid if self.pid is not None else '',
-                'status': self.status.value}
+                'status': self.status.value,
+                'created': str(self.time_created),
+                'updated': str(self.time_updated)}

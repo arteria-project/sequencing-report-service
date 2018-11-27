@@ -26,14 +26,18 @@ class TestJobHandler(AsyncHTTPTestCase):
     def test_get_jobs(self):
         response = self.fetch('/api/1.0/jobs/')
         self.assertEqual(response.code, 200)
-        self.assertEqual(json.loads(response.body),
-                         {'jobs': [{'job_id': 1, 'runfolder': 'foo', 'pid': '', 'status': 'pending'}]})
+        resp_dict = json.loads(response.body)['jobs'][0]
+        self.assertEqual(resp_dict['runfolder'], 'foo')
+        self.assertEqual(resp_dict['job_id'], 1)
+        self.assertEqual(resp_dict['status'], 'pending')
 
     def test_get_job(self):
         response = self.fetch('/api/1.0/jobs/1')
         self.assertEqual(response.code, 200)
-        self.assertEqual(json.loads(response.body),
-                         {'job_id': 1, 'runfolder': 'foo', 'pid': '', 'status': 'pending'})
+        resp_dict = json.loads(response.body)
+        self.assertEqual(resp_dict['runfolder'], 'foo')
+        self.assertEqual(resp_dict['job_id'], 1)
+        self.assertEqual(resp_dict['status'], 'pending')
 
     def test_start_job(self):
         response = self.fetch('/api/1.0/jobs/start/foo', method='POST', body=json.dumps({}))
