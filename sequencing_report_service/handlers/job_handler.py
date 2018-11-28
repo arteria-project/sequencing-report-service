@@ -6,6 +6,7 @@ from arteria.web.handlers import BaseRestHandler
 from sequencing_report_service.handlers import ACCEPTED, NOT_FOUND, FORBIDDEN
 from sequencing_report_service.exceptions import UnableToStopJob
 
+
 class OneJobHandler(BaseRestHandler):
     """
     Handle checking status of jobs. Will return a representation of a job as json e.g.:
@@ -106,12 +107,12 @@ class JobStartHandler(BaseRestHandler):
         The endpoint will then return a link where the run can be monitored:
             {"link": "http://localhost:9999/api/1.0/jobs/130"}
         """
-        #TODO Check that runfolder exists before starting
-        job = self.runner_service.schedule(runfolder)
+        # TODO Check that runfolder exists before starting
+        job_id = self.runner_service.schedule(runfolder)
         self.set_status(status_code=ACCEPTED)
         self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
                                                       self.request.host,
-                                                      self.reverse_url('one_job', job.job_id))})
+                                                      self.reverse_url('one_job', job_id))})
 
 
 class JobStopHandler(BaseRestHandler):

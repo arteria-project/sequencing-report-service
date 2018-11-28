@@ -18,7 +18,7 @@ class TestJobHandler(AsyncHTTPTestCase):
         job = Job(job_id=1, runfolder='foo', status=Status.PENDING)
         mock_runner_service.get_jobs = mock.MagicMock(return_value=[job])
         mock_runner_service.get_job = mock.MagicMock(return_value=job)
-        mock_runner_service.schedule = mock.MagicMock(return_value=job)
+        mock_runner_service.schedule = mock.MagicMock(return_value=job.job_id)
         mock_runner_service.stop = mock.MagicMock(return_value=job)
 
         return Application(routes(runner_service=mock_runner_service))

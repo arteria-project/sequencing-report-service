@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import functools
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -73,7 +74,7 @@ def compose_application(config):
     session_factory = scoped_session(sessionmaker())
     session_factory.configure(bind=engine)
 
-    job_repo = JobRepository(session_factory)
+    job_repo = functools.partial(JobRepository, session_factory=session_factory)
     local_runner_service = LocalRunnerService(job_repo)
 
     reports_repo = ReportsRepository(reports_search_path="./tests/resources/")

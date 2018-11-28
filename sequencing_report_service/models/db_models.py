@@ -28,6 +28,9 @@ class Status(base_enum.Enum):
 
 
 class Job(SQLAlchemyBase):
+    """
+    This table contains information about jobs that we have run.
+    """
     __tablename__ = 'jobs'
 
     job_id = Column(Integer, primary_key=True, autoincrement=True)

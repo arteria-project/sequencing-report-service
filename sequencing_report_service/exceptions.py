@@ -7,5 +7,6 @@ class SequencingReportBaseException(Exception):
 class RunfolderNotFound(SequencingReportBaseException):
     pass
 
+
 class UnableToStopJob(SequencingReportBaseException):
     pass
