@@ -43,7 +43,7 @@ class TestJobRepo(object):
 
     def test_set_state_of_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            assert repo.set_state_of_job(1111, Status.CANCELLED) is False
+            assert repo.set_state_of_job(1111, Status.CANCELLED) is None
 
     def test_get_one_pending_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
