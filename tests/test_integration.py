@@ -11,7 +11,10 @@ from sequencing_report_service import __version__ as version
 
 class TestIntegration(AsyncHTTPTestCase):
     def get_app(self):
-        config = {}
+        config = {'db_connection_string': 'sqlite:///sequencing_reports.db',
+                  'reports_path': './tests/resources/',
+                  'alembic_ini_path': 'config/alembic.ini',
+                  'alembic_log_config_path': 'config/logger.config'}
         return Application(compose_application(config))
 
     def test_get_version(self):

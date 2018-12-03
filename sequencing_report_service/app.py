@@ -21,6 +21,7 @@ from sequencing_report_service.handlers.reports_handler import ReportFileHandler
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.repositiories.reports_repo import ReportsRepository
+from sequencing_report_service.exceptions import ConfigurationError
 
 log = logging.getLogger(__name__)
 
@@ -46,29 +47,41 @@ def routes(**kwargs):
     ]
 
 
-def create_and_migrate_db(db_engine):
+def create_and_migrate_db(db_engine, alembic_ini_path, logger_config_path):
     """
     Configures alembic and runs any none applied migrations found in the
     `scripts_location` folder.
     :param db_engine: engine handle for the database to apply the migrations to
+    :param alembic_ini_path path to lembic ini file
+    :param logger_config_path path to log config file for alembic
     :return: None
     """
-    alembic_cfg = AlembicConfig(file_='config/alembic.ini')
-    alembic_cfg.set_section_option("alembic", "log_config_file", "config/logger.config")
+    alembic_cfg = AlembicConfig(file_=alembic_ini_path)
+    alembic_cfg.set_section_option("alembic", "log_config_file", logger_config_path)
 
     with db_engine.begin() as connection:
         alembic_cfg.attributes["connection"] = connection
         upgrade_db(alembic_cfg, "head")
 
 
+def config_key(config, key):
+    try:
+        return config[key]
+    except KeyError:
+        raise ConfigurationError("{} not specified in config".format(key))
+
+
 def compose_application(config):
 
-    connection_string = 'sqlite:///sequencing_reports.db'
+    connection_string = config_key(config, 'db_connection_string')
+
     engine = create_engine(connection_string, echo=False)
 
     # Instantiate db, services, and repos
     log.info("Creating DB migrations")
-    create_and_migrate_db(engine)
+    alembic_path = config_key(config, 'alembic_ini_path')
+    alembic_log_config_path = config_key(config, 'alembic_log_config_path')
+    create_and_migrate_db(engine, alembic_path, alembic_log_config_path)
 
     log.info("Setup connection to db")
     session_factory = scoped_session(sessionmaker())
@@ -77,7 +90,8 @@ def compose_application(config):
     job_repo = functools.partial(JobRepository, session_factory=session_factory)
     local_runner_service = LocalRunnerService(job_repo)
 
-    reports_repo = ReportsRepository(reports_search_path="./tests/resources/")
+    reports_path = config_key(config, 'reports_path')
+    reports_repo = ReportsRepository(reports_search_path=reports_path)
 
     PeriodicCallback(local_runner_service.process_job_queue, 10*1000).start()
     return routes(config=config,
