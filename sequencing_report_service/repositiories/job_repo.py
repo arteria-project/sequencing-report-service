@@ -62,6 +62,14 @@ class JobRepository(object):
         """
         return self.session.query(Job).all()
 
+    def get_jobs_with_status(self, status):
+        """
+        Get all jobs with specified status
+        :param status:
+        :return: all the jobs, or None
+        """
+        return self.session.query(Job).filter(Job.status == status).all()
+
     def get_job(self, job_id):
         """
         Get the job with the specified job_id
@@ -127,3 +135,17 @@ class JobRepository(object):
                       "wrong in the database...".format(job_id))
             raise e
         return None
+
+    def clear_out_stale_jobs_at_startup(self):
+        """
+        This method will set all jobs which have status started, i.e. jobs which
+        should be running, but are not when the service is started. Should only be
+        called once at the start up of the application
+        :param job_repo_factory
+        :return:
+        """
+        stale_jobs = self.get_jobs_with_status(Status.STARTED)
+        for job in stale_jobs:
+            log.info("Setting status of job with id={}, to {} because it was stale.".format(job.job_id,
+                                                                                            Status.CANCELLED))
+            self.set_state_of_job(job_id=job.job_id, state=Status.CANCELLED)

@@ -71,6 +71,7 @@ def config_key(config, key):
         raise ConfigurationError("{} not specified in config".format(key))
 
 
+
 def compose_application(config):
 
     connection_string = config_key(config, 'db_connection_string')
@@ -87,13 +88,18 @@ def compose_application(config):
     session_factory = scoped_session(sessionmaker())
     session_factory.configure(bind=engine)
 
-    job_repo = functools.partial(JobRepository, session_factory=session_factory)
-    local_runner_service = LocalRunnerService(job_repo)
+    job_repo_factory = functools.partial(JobRepository, session_factory=session_factory)
+    local_runner_service = LocalRunnerService(job_repo_factory)
 
     reports_path = config_key(config, 'reports_path')
     reports_repo = ReportsRepository(reports_search_path=reports_path)
 
-    process_queue_check_interval = config_key(config, 'process_queue_check_interval')
+    # Convert the interval to seconds
+    process_queue_check_interval = int(config_key(config, 'process_queue_check_interval'))*1000
+
+    with job_repo_factory() as job_repo:
+        job_repo.clear_out_stale_jobs_at_startup()
+
     PeriodicCallback(local_runner_service.process_job_queue, process_queue_check_interval).start()
     return routes(config=config,
                   runner_service=local_runner_service,
