@@ -77,6 +77,16 @@ class JobRepository(object):
         """
         return self.session.query(Job).filter(Job.status == Status.PENDING).first()
 
+    def expunge_object(self, obj):
+        """
+        This will remove the object from the current session. This is necessary if you
+        want to pass the object on. However, please note that after this point no
+        changes made to the object will be persisted.
+        :param obj: to remove from current session.
+        :return: None
+        """
+        self.session.expunge(obj)
+
     def set_state_of_job(self, job_id, state):
         """
         Set the state of the of the specified job to the specified state

@@ -43,6 +43,6 @@ class TestLocalRunnerService(object):
 
             mock_job_repo.set_state_of_job = mock.MagicMock(side_effect=mock_job_status_set)
             local_runner_service = LocalRunnerService(mock_job_repo_factory)
-            job = local_runner_service.stop(job.job_id)
+            job_id = local_runner_service.stop(job.job_id)
 
             assert job.status == Status.CANCELLED
