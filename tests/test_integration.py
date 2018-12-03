@@ -14,7 +14,8 @@ class TestIntegration(AsyncHTTPTestCase):
         config = {'db_connection_string': 'sqlite:///sequencing_reports.db',
                   'reports_path': './tests/resources/',
                   'alembic_ini_path': 'config/alembic.ini',
-                  'alembic_log_config_path': 'config/logger.config'}
+                  'alembic_log_config_path': 'config/logger.config',
+                  'process_queue_check_interval': 5}
         return Application(compose_application(config))
 
     def test_get_version(self):

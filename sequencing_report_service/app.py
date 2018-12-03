@@ -93,7 +93,8 @@ def compose_application(config):
     reports_path = config_key(config, 'reports_path')
     reports_repo = ReportsRepository(reports_search_path=reports_path)
 
-    PeriodicCallback(local_runner_service.process_job_queue, 10*1000).start()
+    process_queue_check_interval = config_key(config, 'process_queue_check_interval')
+    PeriodicCallback(local_runner_service.process_job_queue, process_queue_check_interval).start()
     return routes(config=config,
                   runner_service=local_runner_service,
                   reports_repo=reports_repo)
