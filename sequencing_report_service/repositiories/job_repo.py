@@ -85,7 +85,8 @@ class JobRepository(object):
         :param obj: to remove from current session.
         :return: None
         """
-        self.session.expunge(obj)
+        if obj:
+            self.session.expunge(obj)
 
     def set_state_of_job(self, job_id, state):
         """

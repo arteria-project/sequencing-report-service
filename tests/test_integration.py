@@ -31,11 +31,6 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertTrue(json.loads(status_response.body).get('job_id'))
         self.assertTrue(json.loads(status_response.body).get('status'))
 
-    def test_get_job(self):
-        response = self.fetch('/api/1.0/jobs/1')
-        self.assertEqual(response.code, 200)
-        self.assertEqual(json.loads(response.body).get('job_id'), 1)
-
     def test_stop_job(self):
         # First start the job
         response = self.fetch('/api/1.0/jobs/start/foo', method='POST', body=json.dumps({}))
