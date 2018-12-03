@@ -71,7 +71,6 @@ def config_key(config, key):
         raise ConfigurationError("{} not specified in config".format(key))
 
 
-
 def compose_application(config):
 
     connection_string = config_key(config, 'db_connection_string')
