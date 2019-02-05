@@ -33,7 +33,7 @@ setup(
     include_package_data=True,
     keywords='sequencing_report_service',
     name='sequencing_report_service',
-    packages=find_packages(),
+    packages=find_packages(include=["sequencing_report_service*"]),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
