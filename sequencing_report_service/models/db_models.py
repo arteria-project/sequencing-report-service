@@ -15,6 +15,9 @@ SQLAlchemyBase = declarative_base()
 
 
 class Status(base_enum.Enum):
+    """
+    Possible states of a job
+    """
     # This is an ugly hack since the Arteria state class is not
     # an Enum because the it is not supported in Python2.
     # /JD 2018-11-23

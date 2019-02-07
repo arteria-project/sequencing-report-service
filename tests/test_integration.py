@@ -4,7 +4,7 @@ import codecs
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from sequencing_report_service.app import compose_application
+from sequencing_report_service.app import configure_routes
 
 from sequencing_report_service import __version__ as version
 
@@ -16,7 +16,7 @@ class TestIntegration(AsyncHTTPTestCase):
                   'alembic_ini_path': 'config/alembic.ini',
                   'alembic_log_config_path': 'config/logger.config',
                   'process_queue_check_interval': 5}
-        return Application(compose_application(config))
+        return Application(configure_routes(config))
 
     def test_get_version(self):
         response = self.fetch('/api/1.0/version')

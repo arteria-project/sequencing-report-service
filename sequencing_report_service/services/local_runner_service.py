@@ -104,18 +104,32 @@ class LocalRunnerService(object):
             return job_repo.add_job(runfolder=runfolder).job_id
 
     def get_jobs(self):
+        """
+        Return all jobs as a list
+        :return: list of all jobs
+        """
         with self._job_repo_factory() as job_repo:
             for job in job_repo.get_jobs():
                 job_repo.expunge_object(job)
             return job_repo.get_jobs()
 
     def get_job(self, job_id):
+        """
+        Get the job corresponding to the specific job id
+        :param job_id: to fetch job for.
+        :return: a Job, or None if there is no job with the specified job id
+        """
         with self._job_repo_factory() as job_repo:
             job = job_repo.get_job(job_id)
             job_repo.expunge_object(job)
             return job
 
     def process_job_queue(self):
+        """
+        Process the current job queue, starting any jobs which are eligible for starting.
+        This method needs to be called periodically in order for jobs to actually be processed.
+        :return: None
+        """
         with self._job_repo_factory() as job_repo:
             log.debug("Processing job queue.")
             if self._currently_running_job:

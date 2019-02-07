@@ -64,23 +64,35 @@ def create_and_migrate_db(db_engine, alembic_ini_path, logger_config_path):
         upgrade_db(alembic_cfg, "head")
 
 
-def config_key(config, key):
+def get_key_from_config(config, key):
+    """
+    Get the specific key from the provided config object. Raises a ConfigurationError if the specified key
+    does not exist in the configuration.
+    :param config: dict-like object containing the config
+    :param key: key to look up
+    :return: the configuration value
+    """
     try:
         return config[key]
     except KeyError:
         raise ConfigurationError("{} not specified in config".format(key))
 
 
-def compose_application(config):
+def configure_routes(config):
+    """
+    Configure and return the list of routes for the application
+    :param config: a dict-like object containing the app config
+    :return: a list of routes for the application
+    """
 
-    connection_string = config_key(config, 'db_connection_string')
+    connection_string = get_key_from_config(config, 'db_connection_string')
 
     engine = create_engine(connection_string, echo=False)
 
     # Instantiate db, services, and repos
     log.info("Creating DB migrations")
-    alembic_path = config_key(config, 'alembic_ini_path')
-    alembic_log_config_path = config_key(config, 'alembic_log_config_path')
+    alembic_path = get_key_from_config(config, 'alembic_ini_path')
+    alembic_log_config_path = get_key_from_config(config, 'alembic_log_config_path')
     create_and_migrate_db(engine, alembic_path, alembic_log_config_path)
 
     log.info("Setup connection to db")
@@ -90,11 +102,11 @@ def compose_application(config):
     job_repo_factory = functools.partial(JobRepository, session_factory=session_factory)
     local_runner_service = LocalRunnerService(job_repo_factory)
 
-    reports_path = config_key(config, 'reports_path')
+    reports_path = get_key_from_config(config, 'reports_path')
     reports_repo = ReportsRepository(reports_search_path=reports_path)
 
     # Convert the interval to seconds
-    process_queue_check_interval = int(config_key(config, 'process_queue_check_interval'))*1000
+    process_queue_check_interval = int(get_key_from_config(config, 'process_queue_check_interval')) * 1000
 
     with job_repo_factory() as job_repo:
         job_repo.clear_out_stale_jobs_at_startup()
@@ -111,4 +123,4 @@ def start(package=__package__):
     """
     app_svc = AppService.create(package)
     config = app_svc.config_svc
-    app_svc.start(compose_application(config))
+    app_svc.start(configure_routes(config))
