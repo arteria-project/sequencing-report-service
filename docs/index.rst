@@ -7,6 +7,7 @@ Welcome to sequencing-report-service's documentation!
 
    readme
    installation
+   routes
    modules
    contributing
 

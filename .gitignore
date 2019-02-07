@@ -2,6 +2,7 @@
 docs/sequencing_report_service.*.rst
 docs/sequencing_report_service.rst
 docs/modules.rst
+docs/routes.rst
 
 # Ignore default database
 sequencing_reports.db

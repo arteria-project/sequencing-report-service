@@ -68,6 +68,7 @@ coverage: ## check code coverage quickly with the default Python
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/sequencing_report_service.rst
 	rm -f docs/modules.rst
+	python docs/autogenerate/generate_route_docs.py > docs/routes.rst
 	sphinx-apidoc -o docs/ sequencing_report_service
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
