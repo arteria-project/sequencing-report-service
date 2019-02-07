@@ -40,6 +40,7 @@ run:
 
 pages:
   script:
+  - source activate ./environment
   - pip install sphinx sphinx-rtd-theme
   - make docs
   artifacts:
