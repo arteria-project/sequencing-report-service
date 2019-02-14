@@ -1,14 +1,12 @@
-
+"""
+The ReportsRepository finds and presents reports.
+"""
 import os
 from pathlib import Path
-import logging
-
 from sequencing_report_service.exceptions import RunfolderNotFound
 
-log = logging.getLogger(__name__)
 
-
-class ReportsRepository(object):
+class ReportsRepository:
     """
     The ReportsRepository finds and presents reports.
     There can be multiple reports associated with a single runfolder, these are denoted v1, v2, etc.
@@ -38,8 +36,7 @@ class ReportsRepository(object):
         report_path = runfolder_path / 'reports' / version / 'multiqc_report.html'
         if report_path.exists():
             return report_path
-        else:
-            return None
+        return None
 
     def get_current_report_for_runfolder(self, runfolder):
         """

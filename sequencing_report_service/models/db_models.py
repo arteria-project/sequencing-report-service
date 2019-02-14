@@ -1,3 +1,8 @@
+"""
+Use this as the base for all database based models. This is used by alembic to know what the tables
+should look like in the database, so defining new base classes elsewhere will mean that they will not
+be updated properly in the actual database.
+"""
 import enum as base_enum
 
 from sqlalchemy import Column, Integer, String, Enum, DateTime
@@ -6,11 +11,6 @@ from sqlalchemy.sql import func
 
 from arteria.web.state import State
 
-"""
-Use this as the base for all database based models. This is used by alembic to know what the tables
-should look like in the database, so defining new base classes elsewhere will mean that they will not
-be updated properly in the actual database.
-"""
 SQLAlchemyBase = declarative_base()
 
 
@@ -47,6 +47,9 @@ class Job(SQLAlchemyBase):
         return str(self.__dict__)
 
     def to_dict(self):
+        """
+        Converts object to dict
+        """
         return {'job_id': self.job_id,
                 'runfolder': self.runfolder,
                 'pid': self.pid if self.pid is not None else '',

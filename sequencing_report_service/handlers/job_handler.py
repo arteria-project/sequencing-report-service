@@ -1,3 +1,8 @@
+# pylint: disable=W0223,W0221,W0511
+# TODO: remove these exceptions, see DEVELOP-440
+"""
+Handlers start, stop and check jobs.
+"""
 
 from tornado.web import HTTPError
 
