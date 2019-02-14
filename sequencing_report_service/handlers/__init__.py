@@ -1,3 +1,6 @@
+"""
+Handlers for the sequencing_report_service
+"""
 
 # Status codes
 OK = 200

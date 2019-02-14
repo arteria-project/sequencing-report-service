@@ -1,6 +1,10 @@
+# pylint: disable=W0223,W0221,W0511
+# TODO: remove these exceptions, see DEVELOP-440
+"""
+Handlers to retrieve links to reports, and actual report files.
+"""
 
 import re
-import logging
 
 from tornado.web import StaticFileHandler, HTTPError
 
@@ -8,8 +12,6 @@ from arteria.web.handlers import BaseRestHandler
 
 from sequencing_report_service.handlers import NOT_FOUND
 from sequencing_report_service.exceptions import RunfolderNotFound
-
-log = logging.getLogger(__name__)
 
 
 class ReportsHandler(BaseRestHandler):

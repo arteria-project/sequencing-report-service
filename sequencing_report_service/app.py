@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+Sets up routes and db for application, and allows it to be started.
+"""
 
 import logging
 import functools
@@ -6,13 +9,13 @@ import functools
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from alembic.config import Config as AlembicConfig
-from alembic.command import upgrade as upgrade_db
-
 from tornado.web import URLSpec as url
 from tornado.ioloop import PeriodicCallback
 
 from arteria.web.app import AppService
+
+from alembic.config import Config as AlembicConfig
+from alembic.command import upgrade as upgrade_db
 
 from sequencing_report_service.handlers.version_handler import VersionHandler
 from sequencing_report_service.handlers.job_handler import OneJobHandler, ManyJobHandler,\
@@ -60,7 +63,8 @@ def create_and_migrate_db(db_engine, alembic_ini_path, logger_config_path):
     alembic_cfg.set_section_option("alembic", "log_config_file", logger_config_path)
 
     with db_engine.begin() as connection:
-        alembic_cfg.attributes["connection"] = connection
+        conn_attr = {"connection": connection}
+        alembic_cfg.attributes = {**alembic_cfg.attributes, **conn_attr}
         upgrade_db(alembic_cfg, "head")
 
 

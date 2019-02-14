@@ -1,3 +1,6 @@
+"""
+This module contains repository classes related to managing job objects.
+"""
 
 import logging
 
@@ -8,7 +11,7 @@ from sequencing_report_service.models.db_models import Job, Status
 log = logging.getLogger(__name__)
 
 
-class JobRepository(object):
+class JobRepository:
     """
     The JobRepository manages job objects. In this cases these are stored in the a database, but in principle
     they could be anywhere. It should be used as a context handler, i.e.:
@@ -109,11 +112,11 @@ class JobRepository(object):
             self.session.commit()
             return job
         except NoResultFound:
-            log.error("Found no job with id: {}.".format(job_id))
-        except MultipleResultsFound as e:
-            log.error("Found multiple results with id: {}. Something is seriously "
-                      "wrong in the database...".format(job_id))
-            raise e
+            log.error("Found no job with id: %s.", job_id)
+        except MultipleResultsFound as error:
+            log.error("Found multiple results with id: %s. Something is seriously "
+                      "wrong in the database...", job_id)
+            raise error
         return None
 
     def set_pid_of_job(self, job_id, pid):
@@ -129,11 +132,11 @@ class JobRepository(object):
             self.session.commit()
             return Job
         except NoResultFound:
-            log.error("Found no job with id: {}.".format(job_id))
-        except MultipleResultsFound as e:
-            log.error("Found multiple results with id: {}. Something is seriously "
-                      "wrong in the database...".format(job_id))
-            raise e
+            log.error("Found no job with id: %s.", job_id)
+        except MultipleResultsFound as error:
+            log.error("Found multiple results with id: %s. Something is seriously "
+                      "wrong in the database...", job_id)
+            raise error
         return None
 
     def clear_out_stale_jobs_at_startup(self):
@@ -146,6 +149,5 @@ class JobRepository(object):
         """
         stale_jobs = self.get_jobs_with_status(Status.STARTED)
         for job in stale_jobs:
-            log.info("Setting status of job with id={}, to {} because it was stale.".format(job.job_id,
-                                                                                            Status.CANCELLED))
+            log.info("Setting status of job with id=%s, to %s because it was stale.", job.job_id, Status.CANCELLED)
             self.set_state_of_job(job_id=job.job_id, state=Status.CANCELLED)

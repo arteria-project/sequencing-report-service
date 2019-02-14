@@ -1,3 +1,4 @@
+arteria
 pip==18.1
 bumpversion==0.5.3
 wheel==0.32.1
@@ -12,3 +13,5 @@ pytest==3.8.2
 pytest-runner==4.2
 
 mock
+sqlalchemy
+alembic

@@ -1,3 +1,9 @@
+# pylint: disable=R0903,W0511
+# Intentionally disabling R0903 too-few-public-methods error to allow for _RunningJob
+# W0511-fixme pending DEVELOP-237
+"""
+Contains classes to run and manage jobs.
+"""
 
 import logging
 import subprocess
@@ -10,7 +16,7 @@ from sequencing_report_service.exceptions import UnableToStopJob
 log = logging.getLogger(__name__)
 
 
-class _RunningJob(object):
+class _RunningJob:
     """
     Small class to hold information about the currently running job.
     """
@@ -19,7 +25,7 @@ class _RunningJob(object):
         self.process = process
 
 
-class LocalRunnerService(object):
+class LocalRunnerService:
     """
     The local runner service will start jobs one by one and attempt to run to the command associated with
     it. In order for jobs to actually be started `process_job_queue` must be called. This can e.g. be done
@@ -59,17 +65,17 @@ class LocalRunnerService(object):
             # check specifically for not being None here before continuing. /JD 2018-11-26
             if return_code is not None:
                 if return_code == 0:
-                    log.info("Successfully completed process: {}".format(command))
+                    log.info("Successfully completed process: %s", command)
                     job_repo.set_state_of_job(self._currently_running_job.job_id,
                                               Status.DONE)
                     self._currently_running_job = None
                 else:
-                    log.error("Found non-zero exit code: {} for command: {}".format(return_code, command))
+                    log.error("Found non-zero exit code: %s for command: %s", return_code, command)
                     job_repo.set_state_of_job(self._currently_running_job.job_id,
                                               Status.ERROR)
                     self._currently_running_job = None
             else:
-                log.debug("Found no return code for process: {}. Will keep polling later".format(command))
+                log.debug("Found no return code for process: %s. Will keep polling later", command)
 
     def stop(self, job_id):
         """
@@ -80,7 +86,7 @@ class LocalRunnerService(object):
         with self._job_repo_factory() as job_repo:
             job = job_repo.get_job(job_id)
             if job and job.status == Status.PENDING:
-                log.info("Found pending job: {}. Will set its status to cancelled.".format(job))
+                log.info("Found pending job: %s. Will set its status to cancelled.", job)
                 job_repo.set_state_of_job(job_id, Status.CANCELLED)
                 return job.job_id
             if job and job.status == Status.STARTED:
@@ -90,9 +96,8 @@ class LocalRunnerService(object):
                 job_repo.set_state_of_job(job_id, Status.CANCELLED)
                 self._currently_running_job = None
                 return job.job_id
-            else:
-                log.debug("Found no job to cancel with with job id: {}. Or it was not in a cancellable state.")
-                raise UnableToStopJob()
+            log.debug("Found no job to cancel with with job id: {}. Or it was not in a cancellable state.")
+            raise UnableToStopJob()
 
     def schedule(self, runfolder):
         """
