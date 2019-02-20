@@ -38,7 +38,7 @@ test:
   - pip install tox pylint
   - tox -e py36,pylint
   only:
-    - NO-BRANCH
+    - NO-BRANCH # TODO: change back to 'develop'
 
 build:
   stage: build
@@ -56,7 +56,7 @@ deploy-to-dev:
   dependencies:
       - build
   script:
-      - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_JOB_ID
+      - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
   tags:
       - deploys
   only:
