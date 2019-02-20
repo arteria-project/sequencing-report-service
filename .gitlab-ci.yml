@@ -56,7 +56,7 @@ deploy-to-dev:
   dependencies:
       - build
   script:
-      - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_JOB_ID
+      - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_JOB_ID
   tags:
       - deploys
   only:
