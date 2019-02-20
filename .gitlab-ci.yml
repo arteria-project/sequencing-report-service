@@ -15,6 +15,7 @@ cache:
 
 stages:
   # Development
+  - test
   - build                 # Build the product
   - deploy-to-dev         # Deploy to dev
 
@@ -37,7 +38,7 @@ test:
   - pip install tox pylint
   - tox -e py36,pylint
   only:
-    - develop
+    - NO-BRANCH
 
 build:
   stage: build
