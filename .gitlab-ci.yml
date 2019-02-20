@@ -15,7 +15,6 @@ cache:
 
 stages:
   # Development
-  #- test                  # Test the product
   - build                 # Build the product
   - deploy-to-dev         # Deploy to dev
 
