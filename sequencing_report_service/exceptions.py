@@ -31,3 +31,10 @@ class UnableToStopJob(SequencingReportBaseException):
     Exception in case job cannot be stopped because it does not exist on a cancellable state.
     """
     pass
+
+
+class NextflowConfigError(ConfigurationError):
+    """
+    Exception thrown when there is a problem with the configuration of the nextflow job.
+    """
+    pass

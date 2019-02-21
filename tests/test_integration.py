@@ -15,7 +15,11 @@ class TestIntegration(AsyncHTTPTestCase):
                   'reports_path': './tests/resources/',
                   'alembic_ini_path': 'config/alembic.ini',
                   'alembic_log_config_path': 'config/logger.config',
-                  'process_queue_check_interval': 5}
+                  'process_queue_check_interval': 5,
+                  'nextflow_config':
+                    {'cmd': 'echo',
+                     'parameters':
+                        {'hello': 'RUNFOLDER_REPLACE'}}}
         return Application(configure_routes(config))
 
     def test_get_version(self):
