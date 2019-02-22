@@ -38,18 +38,20 @@ class LocalRunnerService:
     returning the job instance.
     """
 
-    def __init__(self, job_repo_factory):
+    def __init__(self, job_repo_factory, nextflow_command_generator):
         """
         Create a new instance of LocalRunnerService
-        :param job_repo_factory: factory method which can produce new JobRepository instances
+        :param: job_repo_factory factory method which can produce new JobRepository instances
+        :param: nextflow_command_generator used to generate nf commands
         """
         self._job_repo_factory = job_repo_factory
+        self._nextflow_jobs_factory = nextflow_command_generator
         self._currently_running_job = None
 
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
-            # TODO Replace with starting actual nextflow job
-            process = subprocess.Popen(['sleep', '1'])
+            nf_cmd = self._nextflow_jobs_factory.command(job.runfolder)
+            process = subprocess.Popen(nf_cmd)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=Status.STARTED)

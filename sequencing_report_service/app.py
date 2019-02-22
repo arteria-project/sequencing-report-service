@@ -25,6 +25,7 @@ from sequencing_report_service.services.local_runner_service import LocalRunnerS
 from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.repositiories.reports_repo import ReportsRepository
 from sequencing_report_service.exceptions import ConfigurationError
+from sequencing_report_service.nextflow import NextflowCommandGenerator
 
 log = logging.getLogger(__name__)
 
@@ -103,8 +104,10 @@ def configure_routes(config):
     session_factory = scoped_session(sessionmaker())
     session_factory.configure(bind=engine)
 
+    nextflow_command_generator = NextflowCommandGenerator(config['nextflow_config'])
+
     job_repo_factory = functools.partial(JobRepository, session_factory=session_factory)
-    local_runner_service = LocalRunnerService(job_repo_factory)
+    local_runner_service = LocalRunnerService(job_repo_factory, nextflow_command_generator)
 
     reports_path = get_key_from_config(config, 'reports_path')
     reports_repo = ReportsRepository(reports_search_path=reports_path)
