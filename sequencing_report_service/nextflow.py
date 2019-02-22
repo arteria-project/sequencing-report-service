@@ -53,7 +53,7 @@ class NextflowCommandGenerator():
         if not found_runfolder_replace:
             raise NextflowConfigError("There has to be an instance of RUNFOLDER_REPLACE "
                                       "in the parameters to nextflow.")
-        
+
         return lst
 
     def _replace_runfolder_with_path_in_params(self, runfolder_path):
