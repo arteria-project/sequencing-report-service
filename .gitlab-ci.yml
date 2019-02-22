@@ -37,8 +37,6 @@ test:
   - python setup.py test
   - pip install tox pylint
   - tox -e py36,pylint
-  only:
-    - develop
 
 build:
   stage: build
