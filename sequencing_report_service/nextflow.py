@@ -1,3 +1,6 @@
+"""
+Module dealing with interacting with Nextflow
+"""
 
 import logging
 
@@ -6,7 +9,9 @@ from sequencing_report_service.exceptions import NextflowConfigError
 log = logging.getLogger(__name__)
 
 
-class NextflowCommandGenerator(object):
+# pylint: disable=R0903
+# Intentionally disabling R0903 too-few-public-methods error to allow for NextflowCommandGenerator
+class NextflowCommandGenerator():
     """
     This is a factory to generate commands to start Nextflow. It assumes
     that it has a setup which contains a value called RUNFOLDER_REPLACE.
@@ -27,7 +32,8 @@ class NextflowCommandGenerator(object):
             log.error(exc)
             raise exc
 
-    def _read_parameters(self, parameters_dict):
+    @staticmethod
+    def _read_parameters(parameters_dict):
         """
         Read the parameters part of the dict and use it to generate a list
         of parameters and their values.
@@ -44,11 +50,11 @@ class NextflowCommandGenerator(object):
                 found_runfolder_replace = True
             lst += [f"--{key}", f"{value}"]
 
-        if found_runfolder_replace:
-            return lst
-        else:
+        if not found_runfolder_replace:
             raise NextflowConfigError("There has to be an instance of RUNFOLDER_REPLACE "
-                                       "in the parameters to nextflow.")
+                                      "in the parameters to nextflow.")
+        
+        return lst
 
     def _replace_runfolder_with_path_in_params(self, runfolder_path):
         """
