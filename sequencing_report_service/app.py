@@ -24,6 +24,7 @@ from sequencing_report_service.handlers.reports_handler import ReportFileHandler
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.repositiories.reports_repo import ReportsRepository
+from sequencing_report_service.repositiories.runfolder_repo import RunfolderRepository
 from sequencing_report_service.exceptions import ConfigurationError
 from sequencing_report_service.nextflow import NextflowCommandGenerator
 
@@ -109,6 +110,9 @@ def configure_routes(config):
     job_repo_factory = functools.partial(JobRepository, session_factory=session_factory)
     local_runner_service = LocalRunnerService(job_repo_factory, nextflow_command_generator)
 
+    monitored_dirs = config['monitored_directories']
+    runfolder_repo = RunfolderRepository(monitored_dirs)
+
     reports_path = get_key_from_config(config, 'reports_path')
     reports_repo = ReportsRepository(reports_search_path=reports_path)
 
@@ -121,6 +125,7 @@ def configure_routes(config):
     PeriodicCallback(local_runner_service.process_job_queue, process_queue_check_interval).start()
     return routes(config=config,
                   runner_service=local_runner_service,
+                  runfolder_repo=runfolder_repo,
                   reports_repo=reports_repo)
 
 

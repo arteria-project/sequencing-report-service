@@ -3,6 +3,7 @@ This module contains repository classes related to managing job objects.
 """
 
 import logging
+from pathlib import Path
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -52,6 +53,8 @@ class JobRepository:
         :param runfolder: to start job for
         :return: the created Job
         """
+        if isinstance(runfolder, Path):
+            runfolder = str(runfolder)
         job = Job(runfolder=runfolder,
                   status=Status.PENDING)
         self.session.add(job)

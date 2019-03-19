@@ -9,7 +9,7 @@ from tornado.web import HTTPError
 from arteria.web.handlers import BaseRestHandler
 
 from sequencing_report_service.handlers import ACCEPTED, NOT_FOUND, FORBIDDEN
-from sequencing_report_service.exceptions import UnableToStopJob
+from sequencing_report_service.exceptions import UnableToStopJob, RunfolderNotFound
 
 
 class OneJobHandler(BaseRestHandler):
@@ -102,8 +102,9 @@ class JobStartHandler(BaseRestHandler):
     and that it will not be run until there is capacity in the runner to add more jobs.
     """
 
-    def initialize(self, runner_service, **kwargs):
+    def initialize(self, runner_service, runfolder_repo, **kwargs):
         self.runner_service = runner_service
+        self.runfolder_repo = runfolder_repo
 
     def post(self, runfolder):
         """
@@ -112,12 +113,17 @@ class JobStartHandler(BaseRestHandler):
         The endpoint will then return a link where the run can be monitored:
             {"link": "http://localhost:9999/api/1.0/jobs/130"}
         """
-        # TODO Check that runfolder exists before starting
-        job_id = self.runner_service.schedule(runfolder)
-        self.set_status(status_code=ACCEPTED)
-        self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
-                                                      self.request.host,
-                                                      self.reverse_url('one_job', job_id))})
+        try:
+            path = self.runfolder_repo.get_runfolder(runfolder)
+            job_id = self.runner_service.schedule(path)
+            self.set_status(status_code=ACCEPTED)
+            self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
+                                                          self.request.host,
+                                                          self.reverse_url('one_job', job_id))})
+        except RunfolderNotFound as e:
+            raise HTTPError(
+                f"Could not not identify runfolder ${runfolder} in any of the monitored directories.",
+                status_code=FORBIDDEN)
 
 
 class JobStopHandler(BaseRestHandler):
