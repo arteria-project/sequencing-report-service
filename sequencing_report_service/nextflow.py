@@ -18,12 +18,14 @@ class NextflowCommandGenerator():
     This value can then be substituted when generating commands to run
     on different runfolders.
     """
+
     def __init__(self, config_dict):
         """
         :param: config_dict a dict containing the configuration for the class
         """
         try:
-            self._cmd = config_dict['cmd']
+            self._cmd = ['nextflow', '-config', config_dict['nf_config'], 'run',
+                         config_dict['repo'], '-latest', '-r', config_dict['pipeline_version']]
             self._params = self._read_parameters(config_dict['parameters'])
         except KeyError as exc:
             log.error(exc)
@@ -70,6 +72,6 @@ class NextflowCommandGenerator():
         inserted at the configured path.
         :param: runfolder path the the runfolder to run command on.
         """
-        cmd = self._cmd.split() + self._replace_runfolder_with_path_in_params(runfolder)
+        cmd = self._cmd + self._replace_runfolder_with_path_in_params(runfolder)
         log.debug("Generated command: %s", cmd)
         return cmd

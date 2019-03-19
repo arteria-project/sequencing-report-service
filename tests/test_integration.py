@@ -17,9 +17,11 @@ class TestIntegration(AsyncHTTPTestCase):
                   'alembic_log_config_path': 'config/logger.config',
                   'process_queue_check_interval': 5,
                   'nextflow_config':
-                    {'cmd': 'echo',
-                     'parameters':
-                        {'hello': 'RUNFOLDER_REPLACE'}}}
+                  {'repo': 'Molmed/summary-report-development',
+                   'pipeline_version': 'master',
+                   'nf_config': 'config/nextflow.config',
+                   'parameters':
+                   {'hello': 'RUNFOLDER_REPLACE'}}}
         return Application(configure_routes(config))
 
     def test_get_version(self):
