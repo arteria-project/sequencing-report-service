@@ -112,3 +112,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# nextflow related files
+work/
+.nextflow*
