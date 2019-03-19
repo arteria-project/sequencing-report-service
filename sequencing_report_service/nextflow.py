@@ -25,7 +25,7 @@ class NextflowCommandGenerator():
         """
         try:
             self._cmd = ['nextflow', '-config', config_dict['nf_config'], 'run',
-                         config_dict['repo'], '-latest', '-r', config_dict['pipeline_version']]
+                         config_dict['main_workflow_path']]
             self._params = self._read_parameters(config_dict['parameters'])
         except KeyError as exc:
             log.error(exc)

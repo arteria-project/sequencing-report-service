@@ -17,8 +17,7 @@ class TestIntegration(AsyncHTTPTestCase):
                   'alembic_log_config_path': 'config/logger.config',
                   'process_queue_check_interval': 5,
                   'nextflow_config':
-                  {'repo': 'Molmed/summary-report-development',
-                   'pipeline_version': 'master',
+                  {'main_workflow_path': 'Molmed/summary-report-development',
                    'nf_config': 'config/nextflow.config',
                    'parameters':
                    {'hello': 'RUNFOLDER_REPLACE'}}}
