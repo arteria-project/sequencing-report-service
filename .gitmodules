@@ -1,0 +1,3 @@
+[submodule "summary-report-development"]
+	path = summary-report-development
+	url = https://github.com/Molmed/summary-report-development/
