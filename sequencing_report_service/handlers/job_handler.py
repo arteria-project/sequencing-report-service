@@ -1,4 +1,6 @@
-# pylint: disable=W0223,W0221,W0511
+# pylint: disable=W0223,W0221,W0511,W0201
+# W0201 needs to be disabled because this is the way that tornado demands that handlers
+#       are setup
 # TODO: remove these exceptions, see DEVELOP-440
 """
 Handlers start, stop and check jobs.
@@ -20,6 +22,9 @@ class OneJobHandler(BaseRestHandler):
     """
 
     def initialize(self, runner_service, **kwargs):
+        """
+        Initalize a new instance of OneJobHandler.
+        """
         self.runner_service = runner_service
 
     def get(self, job_id):
@@ -64,6 +69,9 @@ class ManyJobHandler(BaseRestHandler):
     """
 
     def initialize(self, runner_service, **kwargs):
+        """
+        Initalize a new instance of ManyJobHandler.
+        """
         self.runner_service = runner_service
 
     def get(self):
@@ -103,6 +111,9 @@ class JobStartHandler(BaseRestHandler):
     """
 
     def initialize(self, runner_service, runfolder_repo, **kwargs):
+        """
+        Initalize a new instance of JobStartHandler.
+        """
         self.runner_service = runner_service
         self.runfolder_repo = runfolder_repo
 
@@ -120,7 +131,7 @@ class JobStartHandler(BaseRestHandler):
             self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
                                                           self.request.host,
                                                           self.reverse_url('one_job', job_id))})
-        except RunfolderNotFound as e:
+        except RunfolderNotFound:
             raise HTTPError(
                 status_code=FORBIDDEN,
                 log_message=f"Could not not identify runfolder ${runfolder} in any of the monitored directories.")
@@ -133,6 +144,9 @@ class JobStopHandler(BaseRestHandler):
     """
 
     def initialize(self, **kwargs):
+        """
+        Initalize a new instance of JobStartHandler.
+        """
         self.runner_service = kwargs['runner_service']
 
     def post(self, job_id):

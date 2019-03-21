@@ -1,3 +1,5 @@
+# pylint: disable=C0103
+
 """
 Use this as the base for all database based models. This is used by alembic to know what the tables
 should look like in the database, so defining new base classes elsewhere will mean that they will not

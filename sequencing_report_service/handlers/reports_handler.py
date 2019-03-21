@@ -1,4 +1,6 @@
-# pylint: disable=W0223,W0221,W0511
+# pylint: disable=W0223,W0221,W0511, W0201
+# W0201 needs to be disabled because this is the way that tornado demands that handlers
+#       are setup
 # TODO: remove these exceptions, see DEVELOP-440
 """
 Handlers to retrieve links to reports, and actual report files.
@@ -28,6 +30,9 @@ class ReportsHandler(BaseRestHandler):
     """
 
     def initialize(self, reports_repo, **kwargs):
+        """
+        Instantiate a new ReportsHandler
+        """
         self._reports_repo = reports_repo
 
     def get(self, runfolder):
