@@ -16,10 +16,12 @@ class TestIntegration(AsyncHTTPTestCase):
                   'alembic_ini_path': 'config/alembic.ini',
                   'alembic_log_config_path': 'config/logger.config',
                   'process_queue_check_interval': 5,
+                  'monitored_directories': ['./tests/resources/'],
                   'nextflow_config':
-                    {'cmd': 'echo',
-                     'parameters':
-                        {'hello': 'RUNFOLDER_REPLACE'}}}
+                  {'main_workflow_path': 'Molmed/summary-report-development',
+                   'nf_config': 'config/nextflow.config',
+                   'parameters':
+                   {'hello': 'RUNFOLDER_REPLACE'}}}
         return Application(configure_routes(config))
 
     def test_get_version(self):
@@ -28,7 +30,7 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(json.loads(response.body), {'version': version})
 
     def test_start_job(self):
-        response = self.fetch('/api/1.0/jobs/start/foo', method='POST', body=json.dumps({}))
+        response = self.fetch('/api/1.0/jobs/start/foo_runfolder', method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
         status_link = json.loads(response.body).get('link', None)
         self.assertTrue(status_link)
@@ -38,7 +40,7 @@ class TestIntegration(AsyncHTTPTestCase):
 
     def test_stop_job(self):
         # First start the job
-        response = self.fetch('/api/1.0/jobs/start/foo', method='POST', body=json.dumps({}))
+        response = self.fetch('/api/1.0/jobs/start/foo_runfolder', method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
         status_link = json.loads(response.body).get('link', None)
         self.assertTrue(status_link)

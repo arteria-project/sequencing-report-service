@@ -1,4 +1,6 @@
-# pylint: disable=W0223,W0221,W0511
+# pylint: disable=W0223,W0221,W0511,W0201
+# W0201 needs to be disabled because this is the way that tornado demands that handlers
+#       are setup
 # TODO: remove these exceptions, see DEVELOP-440
 """
 Handlers start, stop and check jobs.
@@ -9,7 +11,7 @@ from tornado.web import HTTPError
 from arteria.web.handlers import BaseRestHandler
 
 from sequencing_report_service.handlers import ACCEPTED, NOT_FOUND, FORBIDDEN
-from sequencing_report_service.exceptions import UnableToStopJob
+from sequencing_report_service.exceptions import UnableToStopJob, RunfolderNotFound
 
 
 class OneJobHandler(BaseRestHandler):
@@ -20,6 +22,9 @@ class OneJobHandler(BaseRestHandler):
     """
 
     def initialize(self, runner_service, **kwargs):
+        """
+        Initalize a new instance of OneJobHandler.
+        """
         self.runner_service = runner_service
 
     def get(self, job_id):
@@ -64,6 +69,9 @@ class ManyJobHandler(BaseRestHandler):
     """
 
     def initialize(self, runner_service, **kwargs):
+        """
+        Initalize a new instance of ManyJobHandler.
+        """
         self.runner_service = runner_service
 
     def get(self):
@@ -102,8 +110,12 @@ class JobStartHandler(BaseRestHandler):
     and that it will not be run until there is capacity in the runner to add more jobs.
     """
 
-    def initialize(self, runner_service, **kwargs):
+    def initialize(self, runner_service, runfolder_repo, **kwargs):
+        """
+        Initalize a new instance of JobStartHandler.
+        """
         self.runner_service = runner_service
+        self.runfolder_repo = runfolder_repo
 
     def post(self, runfolder):
         """
@@ -112,12 +124,17 @@ class JobStartHandler(BaseRestHandler):
         The endpoint will then return a link where the run can be monitored:
             {"link": "http://localhost:9999/api/1.0/jobs/130"}
         """
-        # TODO Check that runfolder exists before starting
-        job_id = self.runner_service.schedule(runfolder)
-        self.set_status(status_code=ACCEPTED)
-        self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
-                                                      self.request.host,
-                                                      self.reverse_url('one_job', job_id))})
+        try:
+            path = self.runfolder_repo.get_runfolder(runfolder)
+            job_id = self.runner_service.schedule(path)
+            self.set_status(status_code=ACCEPTED)
+            self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
+                                                          self.request.host,
+                                                          self.reverse_url('one_job', job_id))})
+        except RunfolderNotFound:
+            raise HTTPError(
+                status_code=FORBIDDEN,
+                log_message=f"Could not not identify runfolder ${runfolder} in any of the monitored directories.")
 
 
 class JobStopHandler(BaseRestHandler):
@@ -127,6 +144,9 @@ class JobStopHandler(BaseRestHandler):
     """
 
     def initialize(self, **kwargs):
+        """
+        Initalize a new instance of JobStartHandler.
+        """
         self.runner_service = kwargs['runner_service']
 
     def post(self, job_id):
