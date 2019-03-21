@@ -18,8 +18,8 @@ class RunfolderRepository():
         """
         Input a list of monitored directories, for this repository to look at
         """
-        self._monitoried_dirs = monitored_directories
-        if not isinstance(self._monitoried_dirs, list) and self._monitoried_dirs is not None:
+        self._monitored_dirs = monitored_directories
+        if not isinstance(self._monitored_dirs, list) and self._monitored_dirs is not None:
             raise ConfigurationError('"monitored_directories" in the config must be a list!')
 
     def get_runfolder(self, runfolder):
@@ -28,7 +28,7 @@ class RunfolderRepository():
          otherwise raise RunfolderNotFound Exception.
         """
 
-        for directory in self._monitoried_dirs:
+        for directory in self._monitored_dirs:
             potential_runfolder = Path(directory) / runfolder
             if potential_runfolder.exists():
                 return potential_runfolder
