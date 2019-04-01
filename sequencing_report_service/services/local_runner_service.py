@@ -20,6 +20,7 @@ class _RunningJob:
     """
     Small class to hold information about the currently running job.
     """
+
     def __init__(self, job_id, process):
         self.job_id = job_id
         self.process = process
@@ -51,7 +52,7 @@ class LocalRunnerService:
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
             nf_cmd = self._nextflow_jobs_factory.command(job.runfolder)
-            process = subprocess.Popen(nf_cmd)
+            process = subprocess.Popen(nf_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=Status.STARTED)
@@ -66,15 +67,19 @@ class LocalRunnerService:
             # is that poll will return None, or the exit status, but since 0 evaluates to False, we need to
             # check specifically for not being None here before continuing. /JD 2018-11-26
             if return_code is not None:
+                cmd_log = self._currently_running_job.process.stdout.read().decode('UTF-8')
+
                 if return_code == 0:
                     log.info("Successfully completed process: %s", command)
-                    job_repo.set_state_of_job(self._currently_running_job.job_id,
-                                              Status.DONE)
+                    job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
+                                              state=Status.DONE,
+                                              cmd_log=cmd_log)
                     self._currently_running_job = None
                 else:
                     log.error("Found non-zero exit code: %s for command: %s", return_code, command)
-                    job_repo.set_state_of_job(self._currently_running_job.job_id,
-                                              Status.ERROR)
+                    job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
+                                              state=Status.ERROR,
+                                              cmd_log=cmd_log)
                     self._currently_running_job = None
             else:
                 log.debug("Found no return code for process: %s. Will keep polling later", command)
