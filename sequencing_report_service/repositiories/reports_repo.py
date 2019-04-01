@@ -14,12 +14,19 @@ class ReportsRepository:
     (normally this should be the most recent one).
     """
 
-    def __init__(self, reports_search_path):
+    def __init__(self, monitored_directories):
         """
         Instantiate a ReportsRepository
-        :param reports_search_path: the base paths were reports can be found.
+        :param monitored_directories: the base paths were runfolders/reports can be found.
         """
-        self._reports_search_path = reports_search_path
+        self._monitored_directories = monitored_directories
+
+    def _find_runfolder_dir(self, runfolder):
+        for directory in self._monitored_directories:
+            runfolder_path = Path(directory) / runfolder
+            if runfolder_path.exists():
+                return runfolder_path
+        raise RunfolderNotFound
 
     def get_report_with_version(self, runfolder, version):
         """
@@ -29,14 +36,8 @@ class ReportsRepository:
         :return: a Path to the report or None if there was no report
         :raises: RunfolderNotFound if there was no such runfolder
         """
-        runfolder_path = Path(self._reports_search_path) / runfolder
-        if not runfolder_path.exists():
-            raise RunfolderNotFound
-
-        report_path = runfolder_path / 'reports' / version / 'multiqc_report.html'
-        if report_path.exists():
-            return report_path
-        return None
+        runfolder_dir = self._find_runfolder_dir(runfolder)
+        return runfolder_dir / 'reports' / version / 'multiqc_report.html'
 
     def get_current_report_for_runfolder(self, runfolder):
         """
@@ -53,11 +54,8 @@ class ReportsRepository:
         :param runfolder:
         :return: a generator of available version, e.g. v1, v2, current
         """
-        reports_path = Path(self._reports_search_path) / runfolder / 'reports'
 
-        if not reports_path.exists():
-            raise RunfolderNotFound
-
-        for report_dir in os.listdir(reports_path):
-            if os.path.isdir(reports_path / report_dir):
+        runfolder_dir = self._find_runfolder_dir(runfolder)
+        for report_dir in os.listdir(runfolder_dir / 'reports'):
+            if os.path.isdir(runfolder_dir / 'reports' / report_dir):
                 yield report_dir
