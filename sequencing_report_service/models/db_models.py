@@ -7,7 +7,7 @@ be updated properly in the actual database.
 """
 import enum as base_enum
 
-from sqlalchemy import Column, Integer, String, Enum, DateTime
+from sqlalchemy import Column, Integer, String, Enum, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
@@ -44,6 +44,7 @@ class Job(SQLAlchemyBase):
     status = Column(Enum(Status))
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
+    log = Column(Text(convert_unicode=True), nullable=True)
 
     def __repr__(self):
         return str(self.__dict__)
@@ -54,7 +55,8 @@ class Job(SQLAlchemyBase):
         """
         return {'job_id': self.job_id,
                 'runfolder': self.runfolder,
-                'pid': self.pid if self.pid is not None else '',
+                'pid': self.pid if self.pid else '',
                 'status': self.status.value,
                 'created': str(self.time_created),
-                'updated': str(self.time_updated)}
+                'updated': str(self.time_updated),
+                'log': str(self.log) if self.log else ''}

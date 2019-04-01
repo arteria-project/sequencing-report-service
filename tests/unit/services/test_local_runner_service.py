@@ -33,9 +33,10 @@ class TestLocalRunnerService(object):
             local_runner_service.process_job_queue()
             assert local_runner_service._currently_running_job is not None
 
-            time.sleep(1.2)
             local_runner_service.process_job_queue()
             assert local_runner_service._currently_running_job is None
+            _, call_keywords = mock_job_repo.set_state_of_job.call_args
+            assert 'cmd_log' in call_keywords
 
     def test_stop(self, nextflow_cmd_generator):
         with mock_job_repo_cm() as (mock_job_repo, mock_job_repo_factory):
