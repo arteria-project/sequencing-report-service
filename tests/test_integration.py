@@ -12,7 +12,6 @@ from sequencing_report_service import __version__ as version
 class TestIntegration(AsyncHTTPTestCase):
     def get_app(self):
         config = {'db_connection_string': 'sqlite:///sequencing_reports.db',
-                  'reports_path': './tests/resources/',
                   'alembic_ini_path': 'config/alembic.ini',
                   'alembic_log_config_path': 'config/logger.config',
                   'process_queue_check_interval': 5,
