@@ -33,4 +33,4 @@ class RunfolderRepository():
             if potential_runfolder.exists():
                 return potential_runfolder
         raise RunfolderNotFound(
-            f"Could not identify a runfolder with the name: ${runfolder} in any of the monitored directories.")
+            f"Could not identify a runfolder with the name: {runfolder} in any of the monitored directories.")
