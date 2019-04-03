@@ -51,8 +51,8 @@ class LocalRunnerService:
 
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
-            nf_cmd = self._nextflow_jobs_factory.command(job.runfolder)
-            process = subprocess.Popen(nf_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            log.debug(f"Will start command: {job.command}")
+            process = subprocess.Popen(job.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=Status.STARTED)
@@ -82,7 +82,7 @@ class LocalRunnerService:
                                               cmd_log=cmd_log)
                     self._currently_running_job = None
             else:
-                log.debug("Found no return code for process: %s. Will keep polling later", command)
+                log.debug("Found process: %s appears to still be running. Will keep polling later.", command)
 
     def stop(self, job_id):
         """
@@ -113,7 +113,8 @@ class LocalRunnerService:
         :return: the job id of the started job
         """
         with self._job_repo_factory() as job_repo:
-            return job_repo.add_job(runfolder=runfolder).job_id
+            nf_cmd = self._nextflow_jobs_factory.command(runfolder)
+            return job_repo.add_job(command=nf_cmd).job_id
 
     def get_jobs(self):
         """
