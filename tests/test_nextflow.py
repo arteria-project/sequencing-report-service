@@ -22,7 +22,7 @@ def test_command():
                       '--name', 'runfolder']
 
 
-def test_raises_on_no_prameters_section():
+def test_raises_on_no_parameters_section():
 
     config = {'main_workflow_path': 'Molmed/summary-report-development',
               'nf_config': 'config/nextflow'}
@@ -30,7 +30,7 @@ def test_raises_on_no_prameters_section():
         NextflowCommandGenerator(config)
 
 
-def test_raises_on_no_prameters_main_workflow_path():
+def test_raises_on_no_parameters_main_workflow_path():
 
     config = {'nf_config': 'config/nextflow',
               'parameters':
