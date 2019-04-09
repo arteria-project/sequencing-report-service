@@ -11,7 +11,7 @@ from sequencing_report_service import __version__ as version
 
 class TestIntegration(AsyncHTTPTestCase):
     def get_app(self):
-        config = {'db_connection_string': 'sqlite:///sequencing_reports.db',
+        config = {'db_connection_string': 'sqlite:///sequencing_reports_test.db',
                   'alembic_ini_path': 'config/alembic.ini',
                   'alembic_log_config_path': 'config/logger.config',
                   'process_queue_check_interval': 5,
@@ -20,7 +20,7 @@ class TestIntegration(AsyncHTTPTestCase):
                   {'main_workflow_path': 'Molmed/summary-report-development',
                    'nf_config': 'config/nextflow.config',
                    'parameters':
-                   {'hello': 'RUNFOLDER_REPLACE'}}}
+                   {'hello': '${DEFAULT: runfolder_path}'}}}
         return Application(configure_routes(config))
 
     def test_get_version(self):

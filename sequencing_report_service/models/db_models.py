@@ -39,12 +39,20 @@ class Job(SQLAlchemyBase):
     __tablename__ = 'jobs'
 
     job_id = Column(Integer, primary_key=True, autoincrement=True)
-    runfolder = Column(String, nullable=False)
+    _command = Column(String, nullable=False)
     pid = Column(Integer, nullable=True)
     status = Column(Enum(Status))
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     log = Column(Text(convert_unicode=True), nullable=True)
+
+    @property
+    def command(self):
+        return self._command.split(';')
+
+    @command.setter
+    def command(self, value):
+        self._command = ';'.join(value)
 
     def __repr__(self):
         return str(self.__dict__)
@@ -54,7 +62,7 @@ class Job(SQLAlchemyBase):
         Converts object to dict
         """
         return {'job_id': self.job_id,
-                'runfolder': self.runfolder,
+                'command': self.command,
                 'pid': self.pid if self.pid else '',
                 'status': self.status.value,
                 'created': str(self.time_created),
