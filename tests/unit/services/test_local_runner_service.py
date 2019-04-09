@@ -8,7 +8,7 @@ import time
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.models.db_models import Job, Status
 
-from tests.test_utils import mock_job_repo as mock_job_repo_cm
+from tests.test_utils import MockJobRepository
 from tests.test_utils import create_mock_nextflow_job_factory
 
 
@@ -18,37 +18,35 @@ class TestLocalRunnerService(object):
     def nextflow_cmd_generator(self):
         return create_mock_nextflow_job_factory()
 
-    def test_schedule(self, nextflow_cmd_generator):
-        with mock_job_repo_cm() as (mock_job_repo, mock_job_repo_factory):
-            job = Job(runfolder='foo_folder', job_id=1)
-            local_runner_service = LocalRunnerService(mock_job_repo_factory, nextflow_cmd_generator)
-            local_runner_service.schedule(job)
-            mock_job_repo.add_job.assert_called_once()
+    @pytest.fixture
+    def job_repo_factory(self):
+        data = []
 
-    def test_process_job_queue(self, nextflow_cmd_generator):
-        with mock_job_repo_cm() as (mock_job_repo, mock_job_repo_factory):
-            job = Job(runfolder='foo_folder')
-            local_runner_service = LocalRunnerService(mock_job_repo_factory, nextflow_cmd_generator)
-            local_runner_service.schedule(job)
-            local_runner_service.process_job_queue()
-            assert local_runner_service._currently_running_job is not None
+        def f():
+            return MockJobRepository(data)
+        return f
 
-            local_runner_service.process_job_queue()
-            assert local_runner_service._currently_running_job is None
-            _, call_keywords = mock_job_repo.set_state_of_job.call_args
-            assert 'cmd_log' in call_keywords
+    def test_schedule(self, nextflow_cmd_generator, job_repo_factory):
+        job = Job(command=['echo', 'hello'])
+        local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
+        job_id = local_runner_service.schedule(job)
+        assert isinstance(local_runner_service.get_job(job_id), Job)
 
-    def test_stop(self, nextflow_cmd_generator):
-        with mock_job_repo_cm() as (mock_job_repo, mock_job_repo_factory):
-            job = Job(runfolder='foo_folder', status=Status.PENDING)
-            mock_job_repo.get_job = mock.MagicMock(return_value=job)
+    def test_process_job_queue(self, nextflow_cmd_generator, job_repo_factory):
+        job = Job(command=['echo', 'hello'])
+        local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
+        local_runner_service.schedule(job)
+        local_runner_service.process_job_queue()
+        assert local_runner_service._currently_running_job is not None
 
-            def mock_job_status_set(job_id, status):
-                job.status = status
-                return job
+        local_runner_service.process_job_queue()
+        assert local_runner_service._currently_running_job is None
 
-            mock_job_repo.set_state_of_job = mock.MagicMock(side_effect=mock_job_status_set)
-            local_runner_service = LocalRunnerService(mock_job_repo_factory, nextflow_cmd_generator)
-            job_id = local_runner_service.stop(job.job_id)
+    def test_stop(self, nextflow_cmd_generator, job_repo_factory):
+        job = Job(command=['echo', 'foo'], status=Status.PENDING)
+        local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
+        job_id = local_runner_service.schedule(job)
+        stopped_id = local_runner_service.stop(job_id)
 
-            assert job.status == Status.CANCELLED
+        assert local_runner_service.get_job(stopped_id).status == Status.CANCELLED
+        assert stopped_id == job_id
