@@ -48,10 +48,16 @@ class Job(SQLAlchemyBase):
 
     @property
     def command(self):
+        """
+        Get value of command
+        """
         return self._command.split(';')
 
     @command.setter
     def command(self, value):
+        """
+        Set the value of command
+        """
         self._command = ';'.join(value)
 
     def __repr__(self):
