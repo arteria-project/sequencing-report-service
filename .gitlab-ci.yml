@@ -1,7 +1,7 @@
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache"
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache"
 
 # Pip's cache doesn't store the python packages
 # https://pip.pypa.io/en/stable/reference/pip_install/#caching
@@ -9,61 +9,61 @@ variables:
 # If you want to also cache the installed packages, you have to install
 # them in a virtualenv and cache it as well.
 cache:
-  paths:
-    - .cache/pip
-    - venv/
+    paths:
+        - .cache/pip
+        - venv/
 
 stages:
-  # Development
-  - test
-  - build                 # Build the product
-  - deploy-to-dev         # Deploy to dev
+    # Development
+    - test
+    - build # Build the product
+    - deploy-to-dev # Deploy to dev
 
-  # Candidate
-  - create-candidate      # Create a candidate in the next branch
+    # Candidate
+    - create-candidate # Create a candidate in the next branch
 
 before_script:
-  - python -V               # Print out python version for debugging
-  - conda create -y -p ./environment python=3.6
-  - source activate ./environment
-  - pip install --upgrade pip
-  # Conda needs to install virtualenv for tox to work
-  - conda install virtualenv
-  - pip install -r requirements_dev.txt
+    - python -V # Print out python version for debugging
+    - conda create -y -p ./environment python=3.7
+    - source activate ./environment
+    - pip install --upgrade pip
+    # Conda needs to install virtualenv for tox to work
+    - conda install virtualenv
+    - pip install -r requirements_dev.txt
 
 test:
-  stage: test
-  script:
-  - python setup.py test
-  - pip install tox pylint
-  - tox -e py36,pylint
+    stage: test
+    script:
+        - python setup.py test
+        - pip install tox pylint
+        - tox -e py37,pylint
 
 build:
-  stage: build
-  script:
-  - python setup.py bdist_wheel
-  artifacts:
-    paths:
-    - dist/*.whl
+    stage: build
+    script:
+        - python setup.py bdist_wheel
+    artifacts:
+        paths:
+            - dist/*.whl
 
 deploy-to-dev:
-  stage: deploy-to-dev
-  dependencies:
-      - build
-  script:
-      - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
-  tags:
-      - deploys
-  only:
-      - develop
+    stage: deploy-to-dev
+    dependencies:
+        - build
+    script:
+        - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
+    tags:
+        - deploys
+    only:
+        - develop
 
 pages:
-  script:
-  - pip install .
-  - pip install sphinx sphinx-rtd-theme
-  - make docs
-  artifacts:
-    paths:
-    - docs/_build/html/
-  only:
-  - master
+    script:
+        - pip install .
+        - pip install sphinx sphinx-rtd-theme
+        - make docs
+    artifacts:
+        paths:
+            - docs/_build/html/
+    only:
+        - master
