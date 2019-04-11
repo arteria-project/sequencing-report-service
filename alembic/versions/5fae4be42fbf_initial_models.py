@@ -25,7 +25,7 @@ def upgrade():
     sa.Column('state', sa.Enum('NONE', 'PENDING', 'READY', 'STARTED', 'DONE', 'ERROR', 'CANCELLED', name='state'), nullable=True),
     sa.Column('time_created', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.Column('time_updated', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('log', sa.Text(_expect_unicode=True), nullable=True),
+    sa.Column('log', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('job_id')
     )
     # ### end Alembic commands ###
