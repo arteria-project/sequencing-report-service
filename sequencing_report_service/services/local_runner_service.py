@@ -51,7 +51,7 @@ class LocalRunnerService:
 
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
-            log.debug(f"Will start command: {job.command}")
+            log.debug("Will start command: %s", job.command)
             process = subprocess.Popen(job.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             self._currently_running_job = _RunningJob(job.job_id, process)

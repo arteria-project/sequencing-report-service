@@ -52,17 +52,20 @@ def routes(**kwargs):
     ]
 
 
-def create_and_migrate_db(db_engine, alembic_ini_path, logger_config_path):
+def create_and_migrate_db(db_engine, db_connection_string, logger_config_path, alembic_script_location):
     """
     Configures alembic and runs any none applied migrations found in the
     `scripts_location` folder.
     :param db_engine: engine handle for the database to apply the migrations to
-    :param alembic_ini_path path to lembic ini file
+    :param db_connection_string: connection string for db to migrate
     :param logger_config_path path to log config file for alembic
+    :param alembic_script_location: path alemtic scripts
     :return: None
     """
-    alembic_cfg = AlembicConfig(file_=alembic_ini_path)
+    alembic_cfg = AlembicConfig()
     alembic_cfg.set_section_option("alembic", "log_config_file", logger_config_path)
+    alembic_cfg.set_section_option("alembic", "sqlalchemy.url", db_connection_string)
+    alembic_cfg.set_section_option("alembic", "script_location", alembic_script_location)
 
     with db_engine.begin() as connection:
         conn_attr = {"connection": connection}
@@ -97,9 +100,12 @@ def configure_routes(config):
 
     # Instantiate db, services, and repos
     log.info("Creating DB migrations")
-    alembic_path = get_key_from_config(config, 'alembic_ini_path')
     alembic_log_config_path = get_key_from_config(config, 'alembic_log_config_path')
-    create_and_migrate_db(engine, alembic_path, alembic_log_config_path)
+    alembic_scripts_path = get_key_from_config(config, 'alembic_scripts')
+    create_and_migrate_db(db_engine=engine,
+                          db_connection_string=connection_string,
+                          logger_config_path=alembic_log_config_path,
+                          alembic_script_location=alembic_scripts_path)
 
     log.info("Setup connection to db")
     session_factory = scoped_session(sessionmaker())

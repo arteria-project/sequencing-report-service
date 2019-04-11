@@ -23,21 +23,21 @@ class TestJobRepo(object):
 
     def test_add_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            job = repo.add_job('foo_folder')
-            assert job.runfolder == 'foo_folder'
+            job = repo.add_job(['foo'])
+            assert job.command == ['foo']
             assert job.status == Status.PENDING
 
     def test_get_jobs(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            repo.add_job('foo_folder')
-            repo.add_job('bar_folder')
+            repo.add_job(['foo'])
+            repo.add_job(['bar'])
             jobs = repo.get_jobs()
             assert len(jobs) == 2
-            assert list(map(lambda x: x.runfolder, jobs)) == ['foo_folder', 'bar_folder']
+            assert list(map(lambda x: x.command, jobs)) == [['foo'], ['bar']]
 
     def test_set_state_of_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            repo.add_job('foo_folder')
+            repo.add_job(['foo'])
             repo.set_state_of_job(1, Status.CANCELLED)
             assert repo.get_job(1).status == Status.CANCELLED
 
@@ -47,8 +47,8 @@ class TestJobRepo(object):
 
     def test_get_one_pending_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            repo.add_job('foo_folder')
-            repo.add_job('bar_folder')
+            repo.add_job(['foo'])
+            repo.add_job(['bar'])
 
             repo.set_state_of_job(1, Status.CANCELLED)
             job = repo.get_one_pending_job()

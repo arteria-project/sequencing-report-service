@@ -18,7 +18,7 @@ class TestJobHandler(AsyncHTTPTestCase):
     def get_app(self):
 
         mock_runner_service = mock.create_autospec(LocalRunnerService)
-        job = Job(job_id=1, runfolder='foo', status=Status.PENDING)
+        job = Job(job_id=1, command=['foo'], status=Status.PENDING)
         mock_runner_service.get_jobs = mock.MagicMock(return_value=[job])
         mock_runner_service.get_job = mock.MagicMock(return_value=job)
         mock_runner_service.schedule = mock.MagicMock(return_value=job.job_id)
@@ -35,7 +35,7 @@ class TestJobHandler(AsyncHTTPTestCase):
         response = self.fetch('/api/1.0/jobs/')
         self.assertEqual(response.code, 200)
         resp_dict = json.loads(response.body)['jobs'][0]
-        self.assertEqual(resp_dict['runfolder'], 'foo')
+        self.assertEqual(resp_dict['command'], ['foo'])
         self.assertEqual(resp_dict['job_id'], 1)
         self.assertEqual(resp_dict['status'], 'pending')
 
@@ -43,7 +43,7 @@ class TestJobHandler(AsyncHTTPTestCase):
         response = self.fetch('/api/1.0/jobs/1')
         self.assertEqual(response.code, 200)
         resp_dict = json.loads(response.body)
-        self.assertEqual(resp_dict['runfolder'], 'foo')
+        self.assertEqual(resp_dict['command'], ['foo'])
         self.assertEqual(resp_dict['job_id'], 1)
         self.assertEqual(resp_dict['status'], 'pending')
 

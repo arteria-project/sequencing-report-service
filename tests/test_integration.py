@@ -1,5 +1,8 @@
 import json
 import codecs
+import tempfile
+from pathlib import Path
+import os
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
@@ -10,18 +13,35 @@ from sequencing_report_service import __version__ as version
 
 
 class TestIntegration(AsyncHTTPTestCase):
+
+    db_file_path = None
+
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        self.db_file_path = Path(tempfile.NamedTemporaryFile().name)
+
+    @classmethod
+    def tearDownClass(self):
+        super().tearDownClass()
+        if self.db_file_path.exists:
+            os.remove(self.db_file_path.name)
+
     def get_app(self):
-        config = {'db_connection_string': 'sqlite:///sequencing_reports_test.db',
+        print(f'sqlite://{self.db_file_path.name}')
+        config = {'db_connection_string': f'sqlite:///{self.db_file_path.name}',
                   'alembic_ini_path': 'config/alembic.ini',
                   'alembic_log_config_path': 'config/logger.config',
+                  'alembic_scripts': './alembic/',
                   'process_queue_check_interval': 5,
                   'monitored_directories': ['./tests/resources/'],
                   'nextflow_config':
                   {'main_workflow_path': 'Molmed/summary-report-development',
                    'nf_config': 'config/nextflow.config',
                    'parameters':
-                   {'hello': '${DEFAULT: runfolder_path}'}}}
-        return Application(configure_routes(config))
+                   {'hello': '${DEFAULT:runfolder_path}'}}}
+        app = Application(configure_routes(config))
+        return app
 
     def test_get_version(self):
         response = self.fetch('/api/1.0/version')

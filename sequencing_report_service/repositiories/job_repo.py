@@ -3,7 +3,6 @@ This module contains repository classes related to managing job objects.
 """
 
 import logging
-from pathlib import Path
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 

@@ -16,15 +16,15 @@ cache:
 stages:
   # Development
   - test
-  - build                 # Build the product
-  - deploy-to-dev         # Deploy to dev
+  - build # Build the product
+  - deploy-to-dev # Deploy to dev
 
   # Candidate
-  - create-candidate      # Create a candidate in the next branch
+  - create-candidate # Create a candidate in the next branch
 
 before_script:
-  - python -V               # Print out python version for debugging
-  - conda create -y -p ./environment python=3.6
+  - python -V # Print out python version for debugging
+  - conda create -y -p ./environment python=3.7
   - source activate ./environment
   - pip install --upgrade pip
   # Conda needs to install virtualenv for tox to work
@@ -34,36 +34,36 @@ before_script:
 test:
   stage: test
   script:
-  - python setup.py test
-  - pip install tox pylint
-  - tox -e py36,pylint
+    - python setup.py test
+    - pip install tox pylint
+    - tox -e py37,pylint
 
 build:
   stage: build
   script:
-  - python setup.py bdist_wheel
+    - python setup.py bdist_wheel
   artifacts:
     paths:
-    - dist/*.whl
+      - dist/*.whl
 
 deploy-to-dev:
   stage: deploy-to-dev
   dependencies:
-      - build
+    - build
   script:
-      - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
+    - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
   tags:
-      - deploys
+    - deploys
   only:
-      - develop
+    - develop
 
 pages:
   script:
-  - pip install .
-  - pip install sphinx sphinx-rtd-theme
-  - make docs
+    - pip install .
+    - pip install sphinx sphinx-rtd-theme
+    - make docs
   artifacts:
     paths:
-    - docs/_build/html/
+      - docs/_build/html/
   only:
-  - master
+    - master
