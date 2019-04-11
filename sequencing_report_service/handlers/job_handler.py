@@ -16,8 +16,8 @@ from sequencing_report_service.exceptions import UnableToStopJob, RunfolderNotFo
 
 class OneJobHandler(BaseRestHandler):
     """
-    Handle checking status of jobs. Will return a representation of a job as json e.g.:
-        {"job_id": 1, "runfolder": "foo", "pid": 3837, "status": "done",
+    Handle checking state of jobs. Will return a representation of a job as json e.g.:
+        {"job_id": 1, "runfolder": "foo", "pid": 3837, "state": "done",
         "created": "2018-11-27 12:06:26", "updated": "2018-11-27 12:06:44"}
     """
 
@@ -30,7 +30,7 @@ class OneJobHandler(BaseRestHandler):
     def get(self, job_id):
         """
         Will return the job object corresponding to a specific job id. It will return or the form:
-        {"job_id": 1, "runfolder": "foo", "pid": 3837, "status": "done",
+        {"job_id": 1, "runfolder": "foo", "pid": 3837, "state": "done",
          "created": "2018-11-27 12:06:26", "updated": "2018-11-27 12:06:44"}
         """
         job = self.runner_service.get_job(job_id)
@@ -43,8 +43,8 @@ class OneJobHandler(BaseRestHandler):
 
 class ManyJobHandler(BaseRestHandler):
     """
-    Handles checking the status of jobs.
-    TODO Add the option of filtering the jobs returned, e.g. for status
+    Handles checking the state of jobs.
+    TODO Add the option of filtering the jobs returned, e.g. for state
     Returns a json object on the following format:
     {
     "jobs": [
@@ -53,7 +53,7 @@ class ManyJobHandler(BaseRestHandler):
             "job_id": 1,
             "pid": 3837,
             "runfolder": "foo",
-            "status": "done",
+            "state": "done",
             "updated": "2018-11-27 12:06:44"
         },
         {
@@ -61,7 +61,7 @@ class ManyJobHandler(BaseRestHandler):
             "job_id": 2,
             "pid": 4394,
             "runfolder": "foo",
-            "status": "done",
+            "state": "done",
             "updated": "2018-11-27 12:11:11"
         }
         ]
@@ -85,7 +85,7 @@ class ManyJobHandler(BaseRestHandler):
                 "job_id": 1,
                 "pid": 3837,
                 "runfolder": "foo",
-                "status": "done",
+                "state": "done",
                 "updated": "2018-11-27 12:06:44"
             },
             {
@@ -93,7 +93,7 @@ class ManyJobHandler(BaseRestHandler):
                 "job_id": 2,
                 "pid": 4394,
                 "runfolder": "foo",
-                "status": "done",
+                "state": "done",
                 "updated": "2018-11-27 12:11:11"
             }
             ]
@@ -140,7 +140,7 @@ class JobStartHandler(BaseRestHandler):
 class JobStopHandler(BaseRestHandler):
     """
     Handle stopping jobs. This will stops jobs which are eligible for stopping, i.e. jobs which have pending or
-    started as their status.
+    started as their state.
     """
 
     def initialize(self, **kwargs):
@@ -152,7 +152,7 @@ class JobStopHandler(BaseRestHandler):
     def post(self, job_id):
         """
         curl -X POST -w'\n' localhost:9999/api/1.0/jobs/stop/1
-        Will return an endpoint at which the status of the job can be checked on the format:
+        Will return an endpoint at which the state of the job can be checked on the format:
             {"link": "http://localhost:9999/api/1.0/jobs/1"}
         If it was possible to stop the job the status code will be 202 (ACCEPTED), and if it was not
         possible to stop the job it will be 403 (FORBIDDEN). If there was no corresponding job_id, the

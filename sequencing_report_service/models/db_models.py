@@ -11,25 +11,25 @@ from sqlalchemy import Column, Integer, String, Enum, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
-from arteria.web.state import State
+from arteria.web.state import State as ArteriaState
 
 SQLAlchemyBase = declarative_base()
 
 
-class Status(base_enum.Enum):
+class State(base_enum.Enum):
     """
     Possible states of a job
     """
     # This is an ugly hack since the Arteria state class is not
     # an Enum because the it is not supported in Python2.
     # /JD 2018-11-23
-    NONE = State.NONE
-    PENDING = State.PENDING
-    READY = State.READY
-    STARTED = State.STARTED
-    DONE = State.DONE
-    ERROR = State.ERROR
-    CANCELLED = State.CANCELLED
+    NONE = ArteriaState.NONE
+    PENDING = ArteriaState.PENDING
+    READY = ArteriaState.READY
+    STARTED = ArteriaState.STARTED
+    DONE = ArteriaState.DONE
+    ERROR = ArteriaState.ERROR
+    CANCELLED = ArteriaState.CANCELLED
 
 
 class Job(SQLAlchemyBase):
@@ -41,7 +41,7 @@ class Job(SQLAlchemyBase):
     job_id = Column(Integer, primary_key=True, autoincrement=True)
     _command = Column(String, nullable=False)
     pid = Column(Integer, nullable=True)
-    status = Column(Enum(Status))
+    state = Column(Enum(State))
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     log = Column(Text(convert_unicode=True), nullable=True)
@@ -70,7 +70,7 @@ class Job(SQLAlchemyBase):
         return {'job_id': self.job_id,
                 'command': self.command,
                 'pid': self.pid if self.pid else '',
-                'status': self.status.value,
+                'state': self.state.value,
                 'created': str(self.time_created),
                 'updated': str(self.time_updated),
                 'log': str(self.log) if self.log else ''}

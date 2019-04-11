@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 import pytest
 
-from sequencing_report_service.models.db_models import SQLAlchemyBase, Status
+from sequencing_report_service.models.db_models import SQLAlchemyBase, State
 from sequencing_report_service.repositiories.job_repo import JobRepository
 
 
@@ -25,7 +25,7 @@ class TestJobRepo(object):
         with JobRepository(db_session_factory) as repo:
             job = repo.add_job(['foo'])
             assert job.command == ['foo']
-            assert job.status == Status.PENDING
+            assert job.state == State.PENDING
 
     def test_get_jobs(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
@@ -38,24 +38,24 @@ class TestJobRepo(object):
     def test_set_state_of_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
             repo.add_job(['foo'])
-            repo.set_state_of_job(1, Status.CANCELLED)
-            assert repo.get_job(1).status == Status.CANCELLED
+            repo.set_state_of_job(1, State.CANCELLED)
+            assert repo.get_job(1).state == State.CANCELLED
 
     def test_set_state_of_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            assert repo.set_state_of_job(1111, Status.CANCELLED) is None
+            assert repo.set_state_of_job(1111, State.CANCELLED) is None
 
     def test_get_one_pending_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
             repo.add_job(['foo'])
             repo.add_job(['bar'])
 
-            repo.set_state_of_job(1, Status.CANCELLED)
+            repo.set_state_of_job(1, State.CANCELLED)
             job = repo.get_one_pending_job()
 
             assert job.job_id == 2
 
-            repo.set_state_of_job(2, Status.READY)
+            repo.set_state_of_job(2, State.READY)
             job_again = repo.get_one_pending_job()
 
             assert job_again is None

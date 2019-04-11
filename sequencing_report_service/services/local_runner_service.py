@@ -10,7 +10,7 @@ import subprocess
 import os
 import signal
 
-from sequencing_report_service.models.db_models import Status
+from sequencing_report_service.models.db_models import State
 from sequencing_report_service.exceptions import UnableToStopJob
 
 log = logging.getLogger(__name__)
@@ -55,12 +55,12 @@ class LocalRunnerService:
             process = subprocess.Popen(job.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
-            job_repo.set_state_of_job(job_id=job.job_id, state=Status.STARTED)
+            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
             job_repo.set_pid_of_job(job.job_id, process.pid)
 
-    def _update_process_status(self):
+    def _update_process_state(self):
         with self._job_repo_factory() as job_repo:
-            log.debug("Updating status of processes...")
+            log.debug("Updating state of processes...")
             return_code = self._currently_running_job.process.poll()
             command = ' '.join(self._currently_running_job.process.args)
             # It looks a bit backwards to check for 'is not None' here. The reason for doing it this way
@@ -72,13 +72,13 @@ class LocalRunnerService:
                 if return_code == 0:
                     log.info("Successfully completed process: %s", command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=Status.DONE,
+                                              state=State.DONE,
                                               cmd_log=cmd_log)
                     self._currently_running_job = None
                 else:
                     log.error("Found non-zero exit code: %s for command: %s", return_code, command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=Status.ERROR,
+                                              state=State.ERROR,
                                               cmd_log=cmd_log)
                     self._currently_running_job = None
             else:
@@ -92,15 +92,15 @@ class LocalRunnerService:
         """
         with self._job_repo_factory() as job_repo:
             job = job_repo.get_job(job_id)
-            if job and job.status == Status.PENDING:
-                log.info("Found pending job: %s. Will set its status to cancelled.", job)
-                job_repo.set_state_of_job(job_id, Status.CANCELLED)
+            if job and job.state == State.PENDING:
+                log.info("Found pending job: %s. Will set its state to cancelled.", job)
+                job_repo.set_state_of_job(job_id, State.CANCELLED)
                 return job.job_id
-            if job and job.status == Status.STARTED:
+            if job and job.state == State.STARTED:
                 log.info("Will stop the currently running job.")
                 current_pid = self._currently_running_job.process.pid
                 os.kill(current_pid, signal.SIGTERM)
-                job_repo.set_state_of_job(job_id, Status.CANCELLED)
+                job_repo.set_state_of_job(job_id, State.CANCELLED)
                 self._currently_running_job = None
                 return job.job_id
             log.debug("Found no job to cancel with with job id: {}. Or it was not in a cancellable state.")
@@ -146,7 +146,7 @@ class LocalRunnerService:
         with self._job_repo_factory() as job_repo:
             log.debug("Processing job queue.")
             if self._currently_running_job:
-                self._update_process_status()
+                self._update_process_state()
             else:
                 job = job_repo.get_one_pending_job()
                 if job:

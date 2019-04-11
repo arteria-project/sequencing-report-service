@@ -6,7 +6,7 @@ import logging
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from sequencing_report_service.models.db_models import Job, Status
+from sequencing_report_service.models.db_models import Job, State
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class JobRepository:
         :return: the created Job
         """
         job = Job(command=command,
-                  status=Status.PENDING)
+                  state=State.PENDING)
         self.session.add(job)
         self.session.commit()
         return job
@@ -65,13 +65,13 @@ class JobRepository:
         """
         return self.session.query(Job).all()
 
-    def get_jobs_with_status(self, status):
+    def get_jobs_with_state(self, state):
         """
-        Get all jobs with specified status
-        :param status:
+        Get all jobs with specified state
+        :param state:
         :return: all the jobs, or None
         """
-        return self.session.query(Job).filter(Job.status == status).all()
+        return self.session.query(Job).filter(Job.state == state).all()
 
     def get_job(self, job_id):
         """
@@ -86,7 +86,7 @@ class JobRepository:
         Get the first available pending Job
         :return: A pending job or none.
         """
-        return self.session.query(Job).filter(Job.status == Status.PENDING).first()
+        return self.session.query(Job).filter(Job.state == State.PENDING).first()
 
     def expunge_object(self, obj):
         """
@@ -103,13 +103,13 @@ class JobRepository:
         """
         Set the state of the of the specified job to the specified state
         :param job_id: of Job to change
-        :param state: Instance of sequencing_report_models.db_models.Status
+        :param state: Instance of sequencing_report_models.db_models.State
         :param cmd_log: Optionally add log for the job
-        :return: The job which status was changed, or none if no (or multiple) jobs with id were found.
+        :return: The job which state was changed, or none if no (or multiple) jobs with id were found.
         """
         try:
             job = self.session.query(Job).filter(Job.job_id == job_id).one()
-            job.status = state
+            job.state = state
             if cmd_log:
                 job.log = cmd_log
             self.session.commit()
@@ -144,13 +144,13 @@ class JobRepository:
 
     def clear_out_stale_jobs_at_startup(self):
         """
-        This method will set all jobs which have status started, i.e. jobs which
+        This method will set all jobs which have state started, i.e. jobs which
         should be running, but are not when the service is started. Should only be
         called once at the start up of the application
         :param job_repo_factory
         :return:
         """
-        stale_jobs = self.get_jobs_with_status(Status.STARTED)
+        stale_jobs = self.get_jobs_with_state(State.STARTED)
         for job in stale_jobs:
-            log.info("Setting status of job with id=%s, to %s because it was stale.", job.job_id, Status.CANCELLED)
-            self.set_state_of_job(job_id=job.job_id, state=Status.CANCELLED)
+            log.info("Setting state of job with id=%s, to %s because it was stale.", job.job_id, State.CANCELLED)
+            self.set_state_of_job(job_id=job.job_id, state=State.CANCELLED)

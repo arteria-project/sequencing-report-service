@@ -55,7 +55,7 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertTrue(status_link)
         status_response = self.fetch(status_link)
         self.assertTrue(json.loads(status_response.body).get('job_id'))
-        self.assertTrue(json.loads(status_response.body).get('status'))
+        self.assertTrue(json.loads(status_response.body).get('state'))
 
     def test_stop_job(self):
         # First start the job
@@ -66,7 +66,7 @@ class TestIntegration(AsyncHTTPTestCase):
         status_response = self.fetch(status_link)
         body_as_dict = json.loads(status_response.body)
         self.assertTrue(body_as_dict.get('job_id'))
-        self.assertTrue(body_as_dict.get('status'))
+        self.assertTrue(body_as_dict.get('state'))
 
         # Then stop it
         stop_response = self.fetch('/api/1.0/jobs/stop/{}'.format(body_as_dict['job_id']),
@@ -77,7 +77,7 @@ class TestIntegration(AsyncHTTPTestCase):
 
         # And check its status
         status_after_stop_response = self.fetch(json.loads(stop_response.body)['link'])
-        self.assertEqual(json.loads(status_after_stop_response.body)['status'], 'cancelled')
+        self.assertEqual(json.loads(status_after_stop_response.body)['state'], 'cancelled')
 
     def test_should_return_current_report(self):
         response = self.fetch('/reports/foo_runfolder/current/')

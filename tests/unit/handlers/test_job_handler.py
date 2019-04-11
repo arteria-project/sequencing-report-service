@@ -11,14 +11,14 @@ import mock
 from sequencing_report_service.app import routes
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.runfolder_repo import RunfolderRepository
-from sequencing_report_service.models.db_models import Job, Status
+from sequencing_report_service.models.db_models import Job, State
 
 
 class TestJobHandler(AsyncHTTPTestCase):
     def get_app(self):
 
         mock_runner_service = mock.create_autospec(LocalRunnerService)
-        job = Job(job_id=1, command=['foo'], status=Status.PENDING)
+        job = Job(job_id=1, command=['foo'], state=State.PENDING)
         mock_runner_service.get_jobs = mock.MagicMock(return_value=[job])
         mock_runner_service.get_job = mock.MagicMock(return_value=job)
         mock_runner_service.schedule = mock.MagicMock(return_value=job.job_id)
@@ -37,7 +37,7 @@ class TestJobHandler(AsyncHTTPTestCase):
         resp_dict = json.loads(response.body)['jobs'][0]
         self.assertEqual(resp_dict['command'], ['foo'])
         self.assertEqual(resp_dict['job_id'], 1)
-        self.assertEqual(resp_dict['status'], 'pending')
+        self.assertEqual(resp_dict['state'], 'pending')
 
     def test_get_job(self):
         response = self.fetch('/api/1.0/jobs/1')
@@ -45,7 +45,7 @@ class TestJobHandler(AsyncHTTPTestCase):
         resp_dict = json.loads(response.body)
         self.assertEqual(resp_dict['command'], ['foo'])
         self.assertEqual(resp_dict['job_id'], 1)
-        self.assertEqual(resp_dict['status'], 'pending')
+        self.assertEqual(resp_dict['state'], 'pending')
 
     def test_start_job(self):
         response = self.fetch('/api/1.0/jobs/start/foo', method='POST', body=json.dumps({}))
