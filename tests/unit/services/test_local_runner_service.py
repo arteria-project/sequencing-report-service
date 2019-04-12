@@ -6,7 +6,7 @@ import mock
 import time
 
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
-from sequencing_report_service.models.db_models import Job, Status
+from sequencing_report_service.models.db_models import Job, State
 
 from tests.test_utils import MockJobRepository
 from tests.test_utils import create_mock_nextflow_job_factory
@@ -43,10 +43,10 @@ class TestLocalRunnerService(object):
         assert local_runner_service._currently_running_job is None
 
     def test_stop(self, nextflow_cmd_generator, job_repo_factory):
-        job = Job(command=['echo', 'foo'], status=Status.PENDING)
+        job = Job(command=['echo', 'foo'], state=State.PENDING)
         local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
         job_id = local_runner_service.schedule(job)
         stopped_id = local_runner_service.stop(job_id)
 
-        assert local_runner_service.get_job(stopped_id).status == Status.CANCELLED
+        assert local_runner_service.get_job(stopped_id).state == State.CANCELLED
         assert stopped_id == job_id

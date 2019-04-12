@@ -3,7 +3,7 @@ import mock
 
 from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.nextflow import NextflowCommandGenerator
-from sequencing_report_service.models.db_models import Job, Status
+from sequencing_report_service.models.db_models import Job, State
 
 
 def create_mock_nextflow_job_factory():
@@ -24,7 +24,7 @@ class MockJobRepository():
 
     def add_job(self, command):
         job = Job(command=command,
-                  status=Status.PENDING,
+                  state=State.PENDING,
                   job_id=len(self._jobs) + 1)
         self._jobs.append(job)
         return job
@@ -32,8 +32,8 @@ class MockJobRepository():
     def get_jobs(self):
         return self._jobs
 
-    def get_jobs_with_status(self, status):
-        return [i for i in self._jobs if i.status == status]
+    def get_jobs_with_state(self, state):
+        return [i for i in self._jobs if i.state == state]
 
     def get_job(self, job_id):
         for job in self._jobs:
@@ -42,7 +42,7 @@ class MockJobRepository():
         return None
 
     def get_one_pending_job(self):
-        potential_job = self.get_jobs_with_status(Status.PENDING)
+        potential_job = self.get_jobs_with_state(State.PENDING)
         if potential_job[0]:
             return potential_job[0]
 
@@ -51,7 +51,7 @@ class MockJobRepository():
 
     def set_state_of_job(self, job_id, state, cmd_log=None):
         job = self.get_job(job_id)
-        job.status = state
+        job.state = state
         if cmd_log:
             job.log = cmd_log
         return job
@@ -62,6 +62,6 @@ class MockJobRepository():
         return Job
 
     def clear_out_stale_jobs_at_startup(self):
-        stale_jobs = self.get_jobs_with_status(Status.STARTED)
+        stale_jobs = self.get_jobs_with_state(State.STARTED)
         for job in stale_jobs:
-            self.set_state_of_job(job_id=job.job_id, state=Status.CANCELLED)
+            self.set_state_of_job(job_id=job.job_id, state=State.CANCELLED)

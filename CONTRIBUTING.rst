@@ -15,7 +15,7 @@ Ready to contribute? Here's how to set up `sequencing_report_service` for local 
 
 3. Install your local copy into a virtualenv. Create a virtual environment with Conda and install the project there::
 
-    $ conda create -n sequencing_report_service python=3.6
+    $ conda create -n sequencing_report_service python=3.7
     $ source activate sequencing_report_service
     $ python setup.py develop
 

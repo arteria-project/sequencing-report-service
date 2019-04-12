@@ -1,8 +1,8 @@
-"""Initial models
+"""initial models
 
-Revision ID: 6fae5fc69a17
-Revises: 
-Create Date: 2019-04-03 14:35:27.272712
+Revision ID: 5fae4be42fbf
+Revises:
+Create Date: 2019-04-11 13:16:36.021141
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6fae5fc69a17'
+revision = '5fae4be42fbf'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,10 +22,10 @@ def upgrade():
     sa.Column('job_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('_command', sa.String(), nullable=False),
     sa.Column('pid', sa.Integer(), nullable=True),
-    sa.Column('status', sa.Enum('NONE', 'PENDING', 'READY', 'STARTED', 'DONE', 'ERROR', 'CANCELLED', name='status'), nullable=True),
+    sa.Column('state', sa.Enum('NONE', 'PENDING', 'READY', 'STARTED', 'DONE', 'ERROR', 'CANCELLED', name='state'), nullable=True),
     sa.Column('time_created', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.Column('time_updated', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('log', sa.Text(convert_unicode=True), nullable=True),
+    sa.Column('log', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('job_id')
     )
     # ### end Alembic commands ###
