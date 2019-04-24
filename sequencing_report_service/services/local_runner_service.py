@@ -52,7 +52,9 @@ class LocalRunnerService:
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
             log.debug("Will start command: %s", job.command)
-            process = subprocess.Popen(job.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            sys_env = os.environ.copy()
+            env = {**sys_env, **job.environment}
+            process = subprocess.Popen(job.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
@@ -114,7 +116,7 @@ class LocalRunnerService:
         """
         with self._job_repo_factory() as job_repo:
             nf_cmd = self._nextflow_jobs_factory.command(runfolder)
-            return job_repo.add_job(command=nf_cmd).job_id
+            return job_repo.add_job(command_with_env=nf_cmd).job_id
 
     def get_jobs(self):
         """

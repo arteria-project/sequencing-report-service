@@ -38,6 +38,8 @@ class TestIntegration(AsyncHTTPTestCase):
                   'nextflow_config':
                   {'main_workflow_path': 'Molmed/summary-report-development',
                    'nf_config': 'config/nextflow.config',
+                   'environment':
+                   {'NXF_TEMP': '/tmp/'},
                    'parameters':
                    {'hello': '${DEFAULT:runfolder_path}'}}}
         app = Application(configure_routes(config))

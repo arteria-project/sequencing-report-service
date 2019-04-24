@@ -3,12 +3,13 @@ import mock
 
 from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.nextflow import NextflowCommandGenerator
+from sequencing_report_service.models.command import CommandWithEnv
 from sequencing_report_service.models.db_models import Job, State
 
 
 def create_mock_nextflow_job_factory():
     m = mock.create_autospec(NextflowCommandGenerator)
-    m.command.return_value = ['echo', 'hello']
+    m.command.return_value = CommandWithEnv(command=['echo', 'hello'], environment={'foo': 'bar'})
     return m
 
 
@@ -22,8 +23,9 @@ class MockJobRepository():
     def __exit__(self, *args):
         pass
 
-    def add_job(self, command):
-        job = Job(command=command,
+    def add_job(self, command_with_env):
+        job = Job(command=command_with_env.command,
+                  environment=command_with_env.environment,
                   state=State.PENDING,
                   job_id=len(self._jobs) + 1)
         self._jobs.append(job)

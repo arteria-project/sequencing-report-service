@@ -27,15 +27,15 @@ class TestLocalRunnerService(object):
         return f
 
     def test_schedule(self, nextflow_cmd_generator, job_repo_factory):
-        job = Job(command=['echo', 'hello'])
+        runfolder = 'foo_runfolder'
         local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
-        job_id = local_runner_service.schedule(job)
+        job_id = local_runner_service.schedule(runfolder)
         assert isinstance(local_runner_service.get_job(job_id), Job)
 
     def test_process_job_queue(self, nextflow_cmd_generator, job_repo_factory):
-        job = Job(command=['echo', 'hello'])
+        runfolder = 'foo_runfolder'
         local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
-        local_runner_service.schedule(job)
+        local_runner_service.schedule(runfolder)
         local_runner_service.process_job_queue()
         assert local_runner_service._currently_running_job is not None
 
@@ -43,9 +43,9 @@ class TestLocalRunnerService(object):
         assert local_runner_service._currently_running_job is None
 
     def test_stop(self, nextflow_cmd_generator, job_repo_factory):
-        job = Job(command=['echo', 'foo'], state=State.PENDING)
+        runfolder = 'foo_runfolder'
         local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
-        job_id = local_runner_service.schedule(job)
+        job_id = local_runner_service.schedule(runfolder)
         stopped_id = local_runner_service.stop(job_id)
 
         assert local_runner_service.get_job(stopped_id).state == State.CANCELLED
