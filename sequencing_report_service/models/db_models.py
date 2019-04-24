@@ -69,10 +69,9 @@ class Job(SQLAlchemyBase):
         Get value of enviroment
         """
         env = self._environment
-        if env:
-            return json.loads(self._environment)
-        else:
+        if not env:
             return None
+        return json.loads(self._environment)
 
     @environment.setter
     def environment(self, value):

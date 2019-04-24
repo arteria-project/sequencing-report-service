@@ -1,4 +1,6 @@
-
+"""
+Module containg code relating to commands
+"""
 from dataclasses import dataclass
 from typing import List, Dict
 
