@@ -27,7 +27,11 @@ class NextflowCommandGenerator():
         :param: config_dict a dict containing the configuration for the class
         """
         try:
-            self._cmd = ['nextflow', '-config', config_dict['nf_config'], 'run',
+            tmp_dir = config_dict.get('tmp_dir', '/tmp/')
+            self._cmd = [f'NXF_TEMP={tmp_dir}',
+                         'nextflow', '-config',
+                         config_dict['nf_config'],
+                         'run',
                          config_dict['main_workflow_path']]
             if not config_dict.get('parameters'):
                 raise NextflowConfigError("The parameters to the nextflow job was empty.")
