@@ -8,6 +8,7 @@ import datetime
 from pathlib import Path
 
 from sequencing_report_service.exceptions import NextflowConfigError
+from sequencing_report_service.models.command import CommandWithEnv
 
 log = logging.getLogger(__name__)
 
@@ -27,15 +28,14 @@ class NextflowCommandGenerator():
         :param: config_dict a dict containing the configuration for the class
         """
         try:
-            tmp_dir = config_dict.get('tmp_dir', '/tmp/')
-            self._cmd = [f'NXF_TEMP={tmp_dir}',
-                         'nextflow', '-config',
+            self._cmd = ['nextflow', '-config',
                          config_dict['nf_config'],
                          'run',
                          config_dict['main_workflow_path']]
             if not config_dict.get('parameters'):
                 raise NextflowConfigError("The parameters to the nextflow job was empty.")
             self._raw_params = config_dict['parameters']
+            self._config_dict = config_dict
         except KeyError as exc:
             log.error(exc)
             raise NextflowConfigError(exc)
@@ -79,5 +79,7 @@ class NextflowCommandGenerator():
         if not isinstance(runfolder, Path):
             runfolder = Path(runfolder)
         cmd = self._cmd + self._construct_nf_param_list(runfolder)
-        log.debug("Generated command: %s", cmd)
-        return cmd
+        env_config = self._config_dict.get('environment')
+        nf_command = CommandWithEnv(command=cmd, environment=env_config)
+        log.debug("Generated command: %s", nf_command)
+        return nf_command

@@ -46,14 +46,15 @@ class JobRepository:
         """
         self.session_factory.remove()
 
-    def add_job(self, command):
+    def add_job(self, command_with_env):
         """
         Add a new job for the specified runfolder. The state of the job will be set as pending.
-        :param command: to start job with
+        :param command_with_env: to start job with
         :return: the created Job
         """
-        job = Job(command=command,
-                  state=State.PENDING)
+        job = Job(command=command_with_env.command,
+                  state=State.PENDING,
+                  environment=command_with_env.environment)
         self.session.add(job)
         self.session.commit()
         return job

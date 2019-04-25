@@ -7,6 +7,8 @@ be updated properly in the actual database.
 """
 import enum as base_enum
 
+import json
+
 from sqlalchemy import Column, Integer, String, Enum, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -40,6 +42,7 @@ class Job(SQLAlchemyBase):
 
     job_id = Column(Integer, primary_key=True, autoincrement=True)
     _command = Column(String, nullable=False)
+    _environment = Column(String, nullable=True)
     pid = Column(Integer, nullable=True)
     state = Column(Enum(State))
     time_created = Column(DateTime(timezone=True), server_default=func.now())
@@ -60,6 +63,23 @@ class Job(SQLAlchemyBase):
         """
         self._command = ';'.join(value)
 
+    @property
+    def environment(self):
+        """
+        Get value of enviroment
+        """
+        env = self._environment
+        if not env:
+            return None
+        return json.loads(self._environment)
+
+    @environment.setter
+    def environment(self, value):
+        """
+        Set the value of environment
+        """
+        self._environment = json.dumps(value)
+
     def __repr__(self):
         return str(self.__dict__)
 
@@ -69,6 +89,7 @@ class Job(SQLAlchemyBase):
         """
         return {'job_id': self.job_id,
                 'command': self.command,
+                'environment': self.environment,
                 'pid': self.pid if self.pid else '',
                 'state': self.state.value,
                 'created': str(self.time_created),
