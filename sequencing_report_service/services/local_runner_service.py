@@ -9,6 +9,7 @@ import logging
 import subprocess
 import os
 import signal
+import tempfile
 
 from sequencing_report_service.models.db_models import State
 from sequencing_report_service.exceptions import UnableToStopJob
@@ -52,9 +53,17 @@ class LocalRunnerService:
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
             log.debug("Will start command: %s", job.command)
-            sys_env = os.environ.copy()
-            env = {**sys_env, **job.environment}
-            process = subprocess.Popen(job.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+            sys_env = os.environ.copy() or {}
+            job_env = job.environment or {}
+            env = {**sys_env, **job_env}
+
+            working_dir = tempfile.mkdtemp()
+
+            process = subprocess.Popen(job.command,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT,
+                                       env=env,
+                                       cwd=working_dir)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
