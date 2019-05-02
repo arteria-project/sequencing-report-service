@@ -22,12 +22,12 @@ class ReportsRepository:
     (normally this should be the most recent one).
     """
 
-    def __init__(self, reports_dirs):
+    def __init__(self, reports_dir):
         """
         Instantiate a ReportsRepository
         :param reports_dir: the base paths were runfolders/reports can be found.
         """
-        self._reports_dir = reports_dirs
+        self._reports_dir = reports_dir
 
     @staticmethod
     def _bf_search(search_for, root, max_depth):

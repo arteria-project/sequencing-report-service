@@ -119,7 +119,7 @@ def configure_routes(config):
     monitored_dirs = get_key_from_config(config, 'monitored_directories')
     runfolder_repo = RunfolderRepository(monitored_dirs)
     reports_dir = get_key_from_config(config, 'reports_dir')
-    reports_repo = ReportsRepository(reports_dirs=reports_dir)
+    reports_repo = ReportsRepository(reports_dir=reports_dir)
 
     # Convert the interval to seconds
     process_queue_check_interval = int(get_key_from_config(config, 'process_queue_check_interval')) * 1000
