@@ -3,7 +3,15 @@ The ReportsRepository finds and presents reports.
 """
 import os
 from pathlib import Path
+import logging
+from queue import Queue
+import dataclasses
+
+
 from sequencing_report_service.exceptions import RunfolderNotFound
+
+
+log = logging.getLogger(__name__)
 
 
 class ReportsRepository:
@@ -14,19 +22,52 @@ class ReportsRepository:
     (normally this should be the most recent one).
     """
 
-    def __init__(self, monitored_directories):
+    def __init__(self, reports_dir):
         """
         Instantiate a ReportsRepository
-        :param monitored_directories: the base paths were runfolders/reports can be found.
+        :param reports_dir: the base paths were runfolders/reports can be found.
         """
-        self._monitored_directories = monitored_directories
+        self._reports_dir = reports_dir
+
+    @staticmethod
+    def _bf_search(search_for, root, max_depth):
+        """
+        Search a directory for a directory with a `search_for` breath from `root` to a
+        maximum recursion depth of `max_depth`
+        """
+
+        # pylint: disable=R0903
+        @dataclasses.dataclass
+        class PathLevel():
+            """
+            Representation of a path and the level they were found at compared to the root
+            """
+            path: Path
+            level: int
+
+        queue = Queue()
+        queue.put(PathLevel(path=Path(root), level=0))
+        while True:
+            if queue.empty():
+                return None
+
+            elem = queue.get()
+
+            if elem.level > max_depth:
+                return None
+
+            if elem.path.name == search_for:
+                return elem.path
+
+            dirs = [x for x in elem.path.iterdir() if x.is_dir()]
+            for directory in dirs:
+                queue.put(PathLevel(path=directory, level=elem.level + 1))
 
     def _find_runfolder_dir(self, runfolder):
-        for directory in self._monitored_directories:
-            runfolder_path = Path(directory) / runfolder
-            if runfolder_path.exists():
-                return runfolder_path
-        raise RunfolderNotFound
+        result = self._bf_search(runfolder, self._reports_dir, 3)
+        if not result:
+            raise RunfolderNotFound
+        return result
 
     def get_report_with_version(self, runfolder, version):
         """
@@ -57,5 +98,5 @@ class ReportsRepository:
 
         runfolder_dir = self._find_runfolder_dir(runfolder)
         for report_dir in os.listdir(runfolder_dir / 'reports'):
-            if os.path.isdir(runfolder_dir / 'reports' / report_dir):
+            if (runfolder_dir / 'reports' / report_dir).is_dir():
                 yield report_dir

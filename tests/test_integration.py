@@ -34,6 +34,7 @@ class TestIntegration(AsyncHTTPTestCase):
                   'alembic_log_config_path': 'config/logger.config',
                   'alembic_scripts': './alembic/',
                   'process_queue_check_interval': 5,
+                  'reports_dir': './tests/resources/reports',
                   'monitored_directories': ['./tests/resources/'],
                   'nextflow_config':
                   {'main_workflow_path': 'Molmed/summary-report-development',
