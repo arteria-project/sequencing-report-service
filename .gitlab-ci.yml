@@ -16,9 +16,10 @@ cache:
 stages:
   # Development
   - test
-  - build # Build the product
-  - deploy-to-dev # Deploy to dev
-  # TODO ADD deploy to staging and prod here
+  - build
+  - deploy-to-dev
+  - deploy-to-staging
+  - deploy-to-prod
 
   # Create versions and iterate on relase candidates
   - version
@@ -63,6 +64,28 @@ deploy-to-dev:
     - deploys
   only:
     - develop
+
+deploy-to-staging:
+  stage: deploy-to-staging
+  dependencies:
+    - build
+  script:
+    - sudo /opt/sysman/cmd/deploy/staging/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
+  tags:
+    - deploys
+  only:
+    - next
+
+deploy-to-prod:
+  stage: deploy-to-prod
+  dependencies:
+    - build
+  script:
+    - sudo /opt/sysman/cmd/deploy/prod/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
+  tags:
+    - deploys
+  only:
+    - master
 
 pages:
   script:
