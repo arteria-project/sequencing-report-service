@@ -18,9 +18,15 @@ stages:
   - test
   - build # Build the product
   - deploy-to-dev # Deploy to dev
+  # TODO ADD deploy to staging and prod here
 
-  # Candidate
-  - create-candidate # Create a candidate in the next branch
+  # Create versions and iterate on relase candidates
+  - version
+  - iterate
+  - create-hotfix
+  # Accept a version and push it to the master branch
+  - accept
+
 
 before_script:
   - python -V # Print out python version for debugging
@@ -41,6 +47,7 @@ test:
 build:
   stage: build
   script:
+    - git describe --tags > version.txt
     - python setup.py bdist_wheel
   artifacts:
     paths:
@@ -67,3 +74,89 @@ pages:
       - docs/_build/html/
   only:
     - master
+
+# NOTE: gitlab doesn't (yet) provide parameters to a manual step, so versioning
+# is handled by 4 different manual tasks (major, minor, patch, rc) HACK
+# https://gitlab.com/gitlab-org/gitlab-ce/issues/24935
+# NOTE: The user might accidentally choose more than one of these. When
+# they provide variables, this should not be an issue.
+major:
+  when: manual
+  stage: version
+  script:
+    - change-version major "#arteria-ops"
+  only:
+    - next
+  tags:
+    - linux
+
+minor:
+  when: manual
+  stage: version
+  script:
+    - change-version minor "#arteria-ops"
+  only:
+    - next
+    - hotfix
+  tags:
+    - linux
+
+patch:
+  when: manual
+  stage: version
+  script:
+    - change-version patch "#arteria-ops"
+  only:
+    - next
+    - hotfix
+  tags:
+    - linux
+
+iterate:
+  when: manual
+  stage: iterate
+  script:
+    - change-version rc "#arteria-ops"
+  only:
+    - next
+    - hotfix
+  tags:
+    - linux
+
+accept:
+  when: manual
+  stage: accept
+  script:
+    - echo "Removing the RC tag from the current version"
+    - change-version accept "#arteria-ops"
+    - echo "Pushing to the master branch on gitlab"
+    - git checkout -B master
+    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/snpseq_packs.git
+    - ssh-agent bash -c "ssh-add ~/.ssh/gitlab-runner; git push origin master"
+  only:
+    - next
+  tags:
+    - linux
+
+sync-branches:
+  stage: accept
+  script:
+    - echo "Pushing to the develop branch on gitlab"
+    - git checkout -B develop
+    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/snpseq_packs.git
+    - ssh-agent bash -c "ssh-add ~/.ssh/gitlab-runner; git push origin develop"
+  only:
+    - master
+
+create-hotfix:
+  stage: create-hotfix
+  script:
+    - echo "Create a hotfix branch from the current branch (usually master). This will overwrite the current hotfix branch."
+    - git checkout -B hotfix
+    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/snpseq_packs.git
+    - ssh-agent bash -c "ssh-add ~/.ssh/gitlab-runner; git push -f origin hotfix"
+  when: manual
+  only:
+    - develop
+  tags:
+    - linux
