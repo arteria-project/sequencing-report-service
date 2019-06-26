@@ -8,6 +8,9 @@ from setuptools import setup, find_packages
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
+with open('version.txt') as version_file:
+    version = version_file.read()
+
 requirements = ['arteria', 'sqlalchemy', 'alembic']
 
 setup_requirements = ['pytest-runner', ]
@@ -38,7 +41,7 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://gitlab.snpseq.medsci.uu.se/shared/sequencing-report-service/sequencing_report_service',
-    version='0.1.0',
+    version=version,
     zip_safe=False,
     entry_points={
         'console_scripts': ['sequencing-report-service = sequencing_report_service.app:start']
