@@ -22,6 +22,7 @@ stages:
   - deploy-to-prod
 
   # Create versions and iterate on relase candidates
+  - create-candidate
   - version
   - iterate
   - create-hotfix
@@ -154,7 +155,7 @@ accept:
     - change-version accept "#arteria-ops"
     - echo "Pushing to the master branch on gitlab"
     - git checkout -B master
-    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/snpseq_packs.git
+    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/sequencing-report-service.git
     - ssh-agent bash -c "ssh-add ~/.ssh/gitlab-runner; git push origin master"
   only:
     - next
@@ -166,17 +167,30 @@ sync-branches:
   script:
     - echo "Pushing to the develop branch on gitlab"
     - git checkout -B develop
-    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/snpseq_packs.git
+    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/sequencing-report-service.git
     - ssh-agent bash -c "ssh-add ~/.ssh/gitlab-runner; git push origin develop"
   only:
     - master
+
+create-candidate:
+  stage: create-candidate
+  script:
+    - echo "Pushing to the next branch on gitlab"
+    - git checkout -B next
+    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/sequencing-report-service.git
+    - ssh-agent bash -c "ssh-add ~/.ssh/gitlab-runner; git push origin next"
+  when: manual
+  only:
+    - develop
+  tags:
+    - linux
 
 create-hotfix:
   stage: create-hotfix
   script:
     - echo "Create a hotfix branch from the current branch (usually master). This will overwrite the current hotfix branch."
     - git checkout -B hotfix
-    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/snpseq_packs.git
+    - git remote set-url origin --push git@gitlab.snpseq.medsci.uu.se:shared/sequencing-report-service.git
     - ssh-agent bash -c "ssh-add ~/.ssh/gitlab-runner; git push -f origin hotfix"
   when: manual
   only:
