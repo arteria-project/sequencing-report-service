@@ -9,7 +9,10 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 with open('version.txt') as version_file:
-    version = version_file.read()
+    # We use the format vx.x.x in out tags
+    # but this format is not a valid python
+    # wheel version, so we remove it here.
+    version = version_file.read().split('v')[1]
 
 requirements = ['arteria', 'sqlalchemy', 'alembic']
 
