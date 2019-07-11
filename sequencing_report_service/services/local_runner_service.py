@@ -9,6 +9,7 @@ import logging
 import subprocess
 import os
 import signal
+import shlex
 import tempfile
 
 from sequencing_report_service.models.db_models import State
@@ -59,11 +60,12 @@ class LocalRunnerService:
 
             working_dir = tempfile.mkdtemp()
 
-            process = subprocess.Popen(job.command,
+            process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT,
                                        env=env,
-                                       cwd=working_dir)
+                                       cwd=working_dir,
+                                       shell=True)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
