@@ -53,19 +53,20 @@ class LocalRunnerService:
 
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
-            log.debug("Will start command: %s", job.command)
             sys_env = os.environ.copy() or {}
             job_env = job.environment or {}
             env = {**sys_env, **job_env}
 
             working_dir = tempfile.mkdtemp()
 
-            process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
+            bash_shell_job_command = ['/bin/bash', '-c'] + shlex.split(shlex.quote(" ".join(job.command)))
+            log.debug("Will start command: %s", bash_shell_job_command)
+
+            process = subprocess.Popen(bash_shell_job_command,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT,
                                        env=env,
-                                       cwd=working_dir,
-                                       shell=True)
+                                       cwd=working_dir)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
