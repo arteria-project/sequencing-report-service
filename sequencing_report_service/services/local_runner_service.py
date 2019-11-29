@@ -41,14 +41,16 @@ class LocalRunnerService:
     returning the job instance.
     """
 
-    def __init__(self, job_repo_factory, nextflow_command_generator):
+    def __init__(self, job_repo_factory, nextflow_command_generator, nextflow_log_dirs):
         """
         Create a new instance of LocalRunnerService
         :param: job_repo_factory factory method which can produce new JobRepository instances
         :param: nextflow_command_generator used to generate nf commands
+        :param: nextflow_log_dirs specifies where nextflow logs should be stored
         """
         self._job_repo_factory = job_repo_factory
         self._nextflow_jobs_factory = nextflow_command_generator
+        self._nextflow_log_dirs = nextflow_log_dirs
         self._currently_running_job = None
 
     def _start_process(self, job):
@@ -58,17 +60,19 @@ class LocalRunnerService:
             job_env = job.environment or {}
             env = {**sys_env, **job_env}
 
-            working_dir = tempfile.mkdtemp()
+            working_dir = os.path.join(self._nextflow_log_dirs, str(job.job_id))
+            os.mkdir(working_dir)
+            self._nxf_log = open(os.path.join(working_dir, "nextflow.out"), "w")
 
             process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT,
+                                       stdout=self._nxf_log,
+                                       stderr=self._nxf_log,
                                        env=env,
                                        cwd=working_dir,
                                        shell=True)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
-            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
+            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED, log_dir=working_dir)
             job_repo.set_pid_of_job(job.job_id, process.pid)
 
     def _update_process_state(self):
@@ -80,19 +84,17 @@ class LocalRunnerService:
             # is that poll will return None, or the exit status, but since 0 evaluates to False, we need to
             # check specifically for not being None here before continuing. /JD 2018-11-26
             if return_code is not None:
-                cmd_log = self._currently_running_job.process.stdout.read().decode('UTF-8')
-
                 if return_code == 0:
+                    self._nxf_log.close()
                     log.info("Successfully completed process: %s", command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=State.DONE,
-                                              cmd_log=cmd_log)
+                                              state=State.DONE)
                     self._currently_running_job = None
                 else:
                     log.error("Found non-zero exit code: %s for command: %s", return_code, command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
                                               state=State.ERROR,
-                                              cmd_log=cmd_log)
+                                              log_dir=log_dir)
                     self._currently_running_job = None
             else:
                 log.debug("Found process: %s appears to still be running. Will keep polling later.", command)

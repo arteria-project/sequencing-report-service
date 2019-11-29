@@ -100,19 +100,19 @@ class JobRepository:
         if obj:
             self.session.expunge(obj)
 
-    def set_state_of_job(self, job_id, state, cmd_log=None):
+    def set_state_of_job(self, job_id, state, log_dir=None):
         """
         Set the state of the of the specified job to the specified state
         :param job_id: of Job to change
         :param state: Instance of sequencing_report_models.db_models.State
-        :param cmd_log: Optionally add log for the job
+        :param log_dir: Optionally add log for the job
         :return: The job which state was changed, or none if no (or multiple) jobs with id were found.
         """
         try:
             job = self.session.query(Job).filter(Job.job_id == job_id).one()
             job.state = state
-            if cmd_log:
-                job.log = cmd_log
+            if log_dir:
+                job.log = log_dir
             self.session.commit()
             return job
         except NoResultFound:
