@@ -51,7 +51,8 @@ class LocalRunnerService:
         self._nextflow_jobs_factory = nextflow_command_generator
         self._nextflow_log_dirs = nextflow_log_dirs
         self._currently_running_job = None
-        self._nxf_log = None
+        self._current_nxf_log = None
+        self._current_nxf_log_fh = None
 
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
@@ -62,17 +63,18 @@ class LocalRunnerService:
 
             working_dir = os.path.join(self._nextflow_log_dirs, str(job.job_id))
             os.mkdir(working_dir)
-            self._nxf_log = open(os.path.join(working_dir, "nextflow.out"), "w")
+            self._current_nxf_log = os.path.join(working_dir, "nextflow.out")
+            self._current_nxf_log_fh = open(self._current_nxf_log, "w")
 
             process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
-                                       stdout=self._nxf_log,
-                                       stderr=self._nxf_log,
+                                       stdout=self._current_nxf_log_fh,
+                                       stderr=self._current_nxf_log_fh,
                                        env=env,
                                        cwd=working_dir,
                                        shell=True)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
-            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED, log_dir=working_dir)
+            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
             job_repo.set_pid_of_job(job.job_id, process.pid)
 
     def _update_process_state(self):
@@ -85,15 +87,17 @@ class LocalRunnerService:
             # check specifically for not being None here before continuing. /JD 2018-11-26
             if return_code is not None:
                 if return_code == 0:
-                    self._nxf_log.close()
+                    self._current_nxf_log_fh.close()
+                    with open(self._current_nxf_log) as log_file:
+                        cmd_log = log_file.read()
                     log.info("Successfully completed process: %s", command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=State.DONE)
+                                              state=State.DONE, cmd_log=cmd_log)
                     self._currently_running_job = None
                 else:
                     log.error("Found non-zero exit code: %s for command: %s", return_code, command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=State.ERROR)
+                                              state=State.ERROR, cmd_log=cmd_log)
                     self._currently_running_job = None
             else:
                 log.debug("Found process: %s appears to still be running. Will keep polling later.", command)
