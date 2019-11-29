@@ -3,6 +3,7 @@ import codecs
 import tempfile
 from pathlib import Path
 import os
+import shutil
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
@@ -28,12 +29,7 @@ class TestIntegration(AsyncHTTPTestCase):
         if self.db_file_path.exists:
             os.remove(self.db_file_path.name)
         if os.path.exists(self.nextflow_log_dirs):
-            for root, dirs, files in os.walk(self.nextflow_log_dirs):
-                for f in files:
-                    os.remove(os.path.join(root, f))
-                for d in dirs:
-                    os.rmdir(os.path.join(root, d))
-            os.rmdir(self.nextflow_log_dirs)
+            shutil.rmtree(self.nextflow_log_dirs)
 
     def get_app(self):
         print(f'sqlite://{self.db_file_path.name}')
