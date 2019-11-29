@@ -10,7 +10,6 @@ import subprocess
 import os
 import signal
 import shlex
-import tempfile
 
 from sequencing_report_service.models.db_models import State
 from sequencing_report_service.exceptions import UnableToStopJob
@@ -52,6 +51,7 @@ class LocalRunnerService:
         self._nextflow_jobs_factory = nextflow_command_generator
         self._nextflow_log_dirs = nextflow_log_dirs
         self._currently_running_job = None
+        self._nxf_log = None
 
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
@@ -93,8 +93,7 @@ class LocalRunnerService:
                 else:
                     log.error("Found non-zero exit code: %s for command: %s", return_code, command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=State.ERROR,
-                                              log_dir=log_dir)
+                                              state=State.ERROR)
                     self._currently_running_job = None
             else:
                 log.debug("Found process: %s appears to still be running. Will keep polling later.", command)
