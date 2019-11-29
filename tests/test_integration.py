@@ -20,12 +20,20 @@ class TestIntegration(AsyncHTTPTestCase):
     def setUpClass(self):
         super().setUpClass()
         self.db_file_path = Path(tempfile.NamedTemporaryFile().name)
+        self.nextflow_log_dirs = tempfile.mkdtemp()
 
     @classmethod
     def tearDownClass(self):
         super().tearDownClass()
         if self.db_file_path.exists:
             os.remove(self.db_file_path.name)
+        if os.path.exists(self.nextflow_log_dirs):
+            for root, dirs, files in os.walk(self.nextflow_log_dirs):
+                for f in files:
+                    os.remove(os.path.join(root, f))
+                for d in dirs:
+                    os.rmdir(os.path.join(root, d))
+            os.rmdir(self.nextflow_log_dirs)
 
     def get_app(self):
         print(f'sqlite://{self.db_file_path.name}')
@@ -36,6 +44,7 @@ class TestIntegration(AsyncHTTPTestCase):
                   'process_queue_check_interval': 5,
                   'reports_dir': './tests/resources/reports',
                   'monitored_directories': ['./tests/resources/'],
+                  'nextflow_log_dirs': self.nextflow_log_dirs,
                   'nextflow_config':
                   {'main_workflow_path': 'Molmed/summary-report-development',
                    'nf_config': 'config/nextflow.config',

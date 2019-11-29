@@ -51,11 +51,11 @@ class MockJobRepository():
     def expunge_object(self, obj):
         return obj
 
-    def set_state_of_job(self, job_id, state, cmd_log=None):
+    def set_state_of_job(self, job_id, state, log_dir=None):
         job = self.get_job(job_id)
         job.state = state
-        if cmd_log:
-            job.log = cmd_log
+        if log_dir:
+            job.log = log_dir
         return job
 
     def set_pid_of_job(self, job_id, pid):

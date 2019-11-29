@@ -2,8 +2,8 @@
 import pytest
 
 import mock
-
-import time
+import tempfile
+import os
 
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.models.db_models import Job, State
@@ -26,15 +26,23 @@ class TestLocalRunnerService(object):
             return MockJobRepository(data)
         return f
 
-    def test_schedule(self, nextflow_cmd_generator, job_repo_factory):
+    @pytest.fixture
+    def nextflow_log_dirs(self):
+        return tempfile.mkdtemp()
+
+    def test_schedule(self, nextflow_cmd_generator, job_repo_factory, nextflow_log_dirs):
         runfolder = 'foo_runfolder'
-        local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
+        local_runner_service = LocalRunnerService(job_repo_factory,
+                                                  nextflow_cmd_generator,
+                                                  nextflow_log_dirs)
         job_id = local_runner_service.schedule(runfolder)
         assert isinstance(local_runner_service.get_job(job_id), Job)
 
-    def test_process_job_queue(self, nextflow_cmd_generator, job_repo_factory):
+    def test_process_job_queue(self, nextflow_cmd_generator, job_repo_factory, nextflow_log_dirs):
         runfolder = 'foo_runfolder'
-        local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
+        local_runner_service = LocalRunnerService(job_repo_factory,
+                                                  nextflow_cmd_generator,
+                                                  nextflow_log_dirs)
         local_runner_service.schedule(runfolder)
         local_runner_service.process_job_queue()
         assert local_runner_service._currently_running_job is not None
@@ -42,9 +50,11 @@ class TestLocalRunnerService(object):
         local_runner_service.process_job_queue()
         assert local_runner_service._currently_running_job is None
 
-    def test_stop(self, nextflow_cmd_generator, job_repo_factory):
+    def test_stop(self, nextflow_cmd_generator, job_repo_factory, nextflow_log_dirs):
         runfolder = 'foo_runfolder'
-        local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
+        local_runner_service = LocalRunnerService(job_repo_factory,
+                                                  nextflow_cmd_generator,
+                                                  nextflow_log_dirs)
         job_id = local_runner_service.schedule(runfolder)
         stopped_id = local_runner_service.stop(job_id)
 
