@@ -37,7 +37,6 @@ class TestLocalRunnerService(object):
         local_runner_service = LocalRunnerService(job_repo_factory, nextflow_cmd_generator)
         local_runner_service.schedule(runfolder)
         local_runner_service.process_job_queue()
-        time.sleep(1)
         assert local_runner_service._currently_running_job is not None
 
         local_runner_service.process_job_queue()
