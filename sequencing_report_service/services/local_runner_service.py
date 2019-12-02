@@ -10,7 +10,6 @@ import subprocess
 import os
 import signal
 import shlex
-import tempfile
 
 from sequencing_report_service.models.db_models import State
 from sequencing_report_service.exceptions import UnableToStopJob
@@ -41,32 +40,38 @@ class LocalRunnerService:
     returning the job instance.
     """
 
-    def __init__(self, job_repo_factory, nextflow_command_generator):
+    def __init__(self, job_repo_factory, nextflow_command_generator, nextflow_log_dirs):
         """
         Create a new instance of LocalRunnerService
         :param: job_repo_factory factory method which can produce new JobRepository instances
         :param: nextflow_command_generator used to generate nf commands
+        :param: nextflow_log_dirs specifies where nextflow logs should be stored
         """
         self._job_repo_factory = job_repo_factory
         self._nextflow_jobs_factory = nextflow_command_generator
+        self._nextflow_log_dirs = nextflow_log_dirs
         self._currently_running_job = None
+        self._current_nxf_log = None
+        self._current_nxf_log_fh = None
 
     def _start_process(self, job):
         with self._job_repo_factory() as job_repo:
+            log.debug("Will start command: %s", job.command)
             sys_env = os.environ.copy() or {}
             job_env = job.environment or {}
             env = {**sys_env, **job_env}
 
-            working_dir = tempfile.mkdtemp()
+            working_dir = os.path.join(self._nextflow_log_dirs, str(job.job_id))
+            os.mkdir(working_dir)
+            self._current_nxf_log = os.path.join(working_dir, "nextflow.out")
+            self._current_nxf_log_fh = open(self._current_nxf_log, "w")
 
-            bash_shell_job_command = ['/bin/bash', '-c'] + shlex.split(shlex.quote(" ".join(job.command)))
-            log.debug("Will start command: %s", bash_shell_job_command)
-
-            process = subprocess.Popen(bash_shell_job_command,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT,
+            process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
+                                       stdout=self._current_nxf_log_fh,
+                                       stderr=self._current_nxf_log_fh,
                                        env=env,
-                                       cwd=working_dir)
+                                       cwd=working_dir,
+                                       shell=True)
 
             self._currently_running_job = _RunningJob(job.job_id, process)
             job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
@@ -81,19 +86,18 @@ class LocalRunnerService:
             # is that poll will return None, or the exit status, but since 0 evaluates to False, we need to
             # check specifically for not being None here before continuing. /JD 2018-11-26
             if return_code is not None:
-                cmd_log = self._currently_running_job.process.stdout.read().decode('UTF-8')
-
                 if return_code == 0:
+                    self._current_nxf_log_fh.close()
+                    with open(self._current_nxf_log) as log_file:
+                        cmd_log = log_file.read()
                     log.info("Successfully completed process: %s", command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=State.DONE,
-                                              cmd_log=cmd_log)
+                                              state=State.DONE, cmd_log=cmd_log)
                     self._currently_running_job = None
                 else:
                     log.error("Found non-zero exit code: %s for command: %s", return_code, command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
-                                              state=State.ERROR,
-                                              cmd_log=cmd_log)
+                                              state=State.ERROR, cmd_log=cmd_log)
                     self._currently_running_job = None
             else:
                 log.debug("Found process: %s appears to still be running. Will keep polling later.", command)

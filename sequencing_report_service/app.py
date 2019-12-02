@@ -114,7 +114,9 @@ def configure_routes(config):
     nextflow_command_generator = NextflowCommandGenerator(config['nextflow_config'])
 
     job_repo_factory = functools.partial(JobRepository, session_factory=session_factory)
-    local_runner_service = LocalRunnerService(job_repo_factory, nextflow_command_generator)
+    local_runner_service = LocalRunnerService(job_repo_factory,
+                                              nextflow_command_generator,
+                                              config['nextflow_log_dirs'])
 
     monitored_dirs = get_key_from_config(config, 'monitored_directories')
     runfolder_repo = RunfolderRepository(monitored_dirs)
