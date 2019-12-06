@@ -7,9 +7,13 @@ from sequencing_report_service.models.command import CommandWithEnv
 from sequencing_report_service.models.db_models import Job, State
 
 
-def create_mock_nextflow_job_factory():
+def create_mock_nextflow_job_factory(error=False):
     m = mock.create_autospec(NextflowCommandGenerator)
-    m.command.return_value = CommandWithEnv(command=['echo', 'hello'], environment={'foo': 'bar'})
+    if error:
+        cmd = ['cat --incorrect']
+    else:
+        cmd = ['echo', 'hello']
+    m.command.return_value = CommandWithEnv(command=cmd, environment={'foo': 'bar'})
     return m
 
 
