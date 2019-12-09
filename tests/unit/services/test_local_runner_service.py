@@ -4,6 +4,7 @@ import pytest
 import mock
 import tempfile
 import os
+import time
 
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.models.db_models import Job, State
@@ -60,3 +61,14 @@ class TestLocalRunnerService(object):
 
         assert local_runner_service.get_job(stopped_id).state == State.CANCELLED
         assert stopped_id == job_id
+
+    def test_error(self, job_repo_factory, nextflow_log_dirs):
+        runfolder = 'foo_runfolder'
+        local_runner_service = LocalRunnerService(job_repo_factory,
+                                                  create_mock_nextflow_job_factory(error=True),
+                                                  nextflow_log_dirs)
+        job_id = local_runner_service.schedule(runfolder)
+        local_runner_service.process_job_queue()
+        time.sleep(1)
+        local_runner_service.process_job_queue()
+        assert local_runner_service.get_job(job_id).state == State.ERROR

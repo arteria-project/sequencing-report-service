@@ -86,10 +86,10 @@ class LocalRunnerService:
             # is that poll will return None, or the exit status, but since 0 evaluates to False, we need to
             # check specifically for not being None here before continuing. /JD 2018-11-26
             if return_code is not None:
+                self._current_nxf_log_fh.close()
+                with open(self._current_nxf_log) as log_file:
+                    cmd_log = log_file.read()
                 if return_code == 0:
-                    self._current_nxf_log_fh.close()
-                    with open(self._current_nxf_log) as log_file:
-                        cmd_log = log_file.read()
                     log.info("Successfully completed process: %s", command)
                     job_repo.set_state_of_job(job_id=self._currently_running_job.job_id,
                                               state=State.DONE, cmd_log=cmd_log)
