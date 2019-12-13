@@ -60,7 +60,7 @@ deploy-to-dev:
   dependencies:
     - build
   script:
-    - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
+    - sudo /opt/sysman/cmd/deploy/dev/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID $CI_COMMIT_SHA
   tags:
     - deploys
   only:
@@ -71,7 +71,7 @@ deploy-to-staging:
   dependencies:
     - build
   script:
-    - sudo /opt/sysman/cmd/deploy/staging/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
+    - sudo /opt/sysman/cmd/deploy/staging/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID $CI_COMMIT_SHA
   tags:
     - deploys
   only:
@@ -82,7 +82,7 @@ deploy-to-prod:
   dependencies:
     - build
   script:
-    - sudo /opt/sysman/cmd/deploy/prod/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID
+    - sudo /opt/sysman/cmd/deploy/prod/products/seqreports $CI_PROJECT_ID $CI_PIPELINE_ID $CI_COMMIT_SHA
   tags:
     - deploys
   only:
