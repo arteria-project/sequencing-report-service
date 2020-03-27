@@ -31,7 +31,9 @@ class NextflowCommandGenerator():
             self._cmd = ['nextflow', '-config',
                          config_dict['nf_config'],
                          'run',
-                         config_dict['main_workflow_path']]
+                         config_dict['main_workflow_path'],
+                         '-profile',
+                         config_dict['nf_profile']]
             if not config_dict.get('parameters'):
                 raise NextflowConfigError("The parameters to the nextflow job was empty.")
             self._raw_params = config_dict['parameters']
