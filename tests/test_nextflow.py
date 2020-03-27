@@ -8,6 +8,7 @@ from sequencing_report_service.nextflow import NextflowCommandGenerator, Nextflo
 def test_command():
     config = {'main_workflow_path': 'Molmed/summary-report-development',
               'nf_config': 'config/nextflow',
+              'nf_profile': 'singularity,snpseq',
               'environment':
               {
                   'NXF_TEMP': '/tmp_foo'
@@ -21,6 +22,7 @@ def test_command():
     result = cmd_generator.command('/path/to/runfolder')
     assert result.command == ['nextflow', '-config', 'config/nextflow', 'run',
                               'Molmed/summary-report-development',
+                              '-profile', 'singularity,snpseq',
                               '--hello', '/path/to/runfolder',
                               '--year', str(datetime.datetime.now().year),
                               '--name', 'runfolder']

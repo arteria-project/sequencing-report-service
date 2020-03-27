@@ -44,6 +44,7 @@ class TestIntegration(AsyncHTTPTestCase):
                   'nextflow_config':
                   {'main_workflow_path': 'Molmed/summary-report-development',
                    'nf_config': 'config/nextflow.config',
+                   'nf_profile': 'singularity,snpseq',
                    'environment':
                    {'NXF_TEMP': '/tmp/'},
                    'parameters':
