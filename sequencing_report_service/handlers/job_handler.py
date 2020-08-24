@@ -131,10 +131,11 @@ class JobStartHandler(BaseRestHandler):
             self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
                                                           self.request.host,
                                                           self.reverse_url('one_job', job_id))})
-        except RunfolderNotFound:
+        except RunfolderNotFound as exc:
             raise HTTPError(
                 status_code=FORBIDDEN,
-                log_message=f"Could not not identify runfolder ${runfolder} in any of the monitored directories.")
+                log_message=f"Could not not identify runfolder ${runfolder} in any of the monitored directories.") \
+                from exc
 
 
 class JobStopHandler(BaseRestHandler):

@@ -83,8 +83,8 @@ def get_key_from_config(config, key):
     """
     try:
         return config[key]
-    except KeyError:
-        raise ConfigurationError("{} not specified in config".format(key))
+    except KeyError as exc:
+        raise ConfigurationError("{} not specified in config".format(key)) from exc
 
 
 def configure_routes(config):
