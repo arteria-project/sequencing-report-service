@@ -40,7 +40,7 @@ class NextflowCommandGenerator():
             self._config_dict = config_dict
         except KeyError as exc:
             log.error(exc)
-            raise NextflowConfigError(exc)
+            raise NextflowConfigError(exc) from exc
         except NextflowConfigError as exc:
             log.error(exc)
             raise exc

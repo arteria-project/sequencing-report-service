@@ -55,8 +55,8 @@ class ReportsHandler(BaseRestHandler):
                                                 self.request.host,
                                                 self.reverse_url('report', '{}/{}'.format(runfolder, version))))
             self.write({'links': links})
-        except RunfolderNotFound:
-            raise HTTPError(NOT_FOUND)
+        except RunfolderNotFound as exc:
+            raise HTTPError(NOT_FOUND) from exc
 
 
 class ReportFileHandler(StaticFileHandler):
@@ -69,7 +69,7 @@ class ReportFileHandler(StaticFileHandler):
 
     def initialize(self, path, reports_repo, default_filename=None, **kwargs):
         self._reports_repo = reports_repo
-        super(ReportFileHandler, self).initialize(path, default_filename=default_filename)
+        super().initialize(path, default_filename=default_filename)
 
     def validate_absolute_path(self, root, absolute_path):
         # This regex will match the following type of paths
@@ -94,7 +94,7 @@ class ReportFileHandler(StaticFileHandler):
                 report_path = str(self._reports_repo.get_report_with_version(runfolder, version))
             else:
                 report_path = str(self._reports_repo.get_current_report_for_runfolder(runfolder))
-        except RunfolderNotFound:
-            raise HTTPError(NOT_FOUND)
+        except RunfolderNotFound as exc:
+            raise HTTPError(NOT_FOUND) from exc
 
         return report_path
