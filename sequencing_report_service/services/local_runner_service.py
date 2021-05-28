@@ -64,18 +64,18 @@ class LocalRunnerService:
             working_dir = os.path.join(self._nextflow_log_dirs, str(job.job_id))
             os.mkdir(working_dir)
             self._current_nxf_log = os.path.join(working_dir, "nextflow.out")
-            self._current_nxf_log_fh = open(self._current_nxf_log, "w")
+            with open(self._current_nxf_log, "w") as self._current_nxf_log_fh:
 
-            process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
-                                       stdout=self._current_nxf_log_fh,
-                                       stderr=self._current_nxf_log_fh,
-                                       env=env,
-                                       cwd=working_dir,
-                                       shell=True)
+                with subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
+                                           stdout=self._current_nxf_log_fh,
+                                           stderr=self._current_nxf_log_fh,
+                                           env=env,
+                                           cwd=working_dir,
+                                           shell=True) as process:
 
-            self._currently_running_job = _RunningJob(job.job_id, process)
-            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
-            job_repo.set_pid_of_job(job.job_id, process.pid)
+                    self._currently_running_job = _RunningJob(job.job_id, process)
+                    job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
+                    job_repo.set_pid_of_job(job.job_id, process.pid)
 
     def _update_process_state(self):
         with self._job_repo_factory() as job_repo:
