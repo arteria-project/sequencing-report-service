@@ -1,6 +1,8 @@
-# pylint: disable=R0903,W0511
+# pylint: disable=R0903,W0511,R1732
 # Intentionally disabling R0903 too-few-public-methods error to allow for _RunningJob
 # W0511-fixme pending DEVELOP-237
+# Intentionally disabling R1732 consider-using-with since it is not appropriate for
+# open and Popen calls in _start_process
 """
 Contains classes to run and manage jobs.
 """
@@ -64,18 +66,18 @@ class LocalRunnerService:
             working_dir = os.path.join(self._nextflow_log_dirs, str(job.job_id))
             os.mkdir(working_dir)
             self._current_nxf_log = os.path.join(working_dir, "nextflow.out")
-            with open(self._current_nxf_log, "w") as self._current_nxf_log_fh:
+            self._current_nxf_log_fh = open(self._current_nxf_log, "w")
 
-                with subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
-                                           stdout=self._current_nxf_log_fh,
-                                           stderr=self._current_nxf_log_fh,
-                                           env=env,
-                                           cwd=working_dir,
-                                           shell=True) as process:
+            process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
+                                       stdout=self._current_nxf_log_fh,
+                                       stderr=self._current_nxf_log_fh,
+                                       env=env,
+                                       cwd=working_dir,
+                                       shell=True)
 
-                    self._currently_running_job = _RunningJob(job.job_id, process)
-                    job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
-                    job_repo.set_pid_of_job(job.job_id, process.pid)
+            self._currently_running_job = _RunningJob(job.job_id, process)
+            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
+            job_repo.set_pid_of_job(job.job_id, process.pid)
 
     def _update_process_state(self):
         with self._job_repo_factory() as job_repo:
