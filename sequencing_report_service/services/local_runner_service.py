@@ -66,7 +66,7 @@ class LocalRunnerService:
             working_dir = os.path.join(self._nextflow_log_dirs, str(job.job_id))
             os.mkdir(working_dir)
             self._current_nxf_log = os.path.join(working_dir, "nextflow.out")
-            self._current_nxf_log_fh = open(self._current_nxf_log, "w")
+            self._current_nxf_log_fh = open(self._current_nxf_log, "w", encoding="utf-8")
 
             process = subprocess.Popen(shlex.split(shlex.quote(" ".join(job.command))),
                                        stdout=self._current_nxf_log_fh,
@@ -89,7 +89,7 @@ class LocalRunnerService:
             # check specifically for not being None here before continuing. /JD 2018-11-26
             if return_code is not None:
                 self._current_nxf_log_fh.close()
-                with open(self._current_nxf_log) as log_file:
+                with open(self._current_nxf_log, encoding="utf-8") as log_file:
                     cmd_log = log_file.read()
                 if return_code == 0:
                     log.info("Successfully completed process: %s", command)
