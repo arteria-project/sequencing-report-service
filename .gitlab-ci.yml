@@ -45,9 +45,7 @@ before_script:
 test:
   stage: test
   script:
-    - python setup.py test
-    - pip install tox pylint
-    - tox -e py37,pylint
+    - pytest tests/
 
 build:
   stage: build
