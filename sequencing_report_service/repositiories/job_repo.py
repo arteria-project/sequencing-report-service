@@ -52,9 +52,9 @@ class JobRepository:
         :param command_with_env: to start job with
         :return: the created Job
         """
-        job = Job(command=command_with_env.command,
+        job = Job(command=command_with_env['command'],
                   state=State.PENDING,
-                  environment=command_with_env.environment)
+                  environment=command_with_env['environment'])
         self.session.add(job)
         self.session.commit()
         return job
