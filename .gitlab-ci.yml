@@ -37,7 +37,7 @@ before_script:
   - pip install --upgrade pip
   # Conda needs to install virtualenv for tox to work
   - conda install virtualenv
-  - pip install -r requirements_dev.txt
+  - pip install -r requirements/dev
   # checking out the repository on ansible-orchestrated machines needs ssh-agent forwarding
   - eval $(ssh-agent -s)
   - ssh-add ~/.ssh/gitlab-runner
