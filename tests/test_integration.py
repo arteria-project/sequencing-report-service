@@ -37,7 +37,6 @@ class TestIntegration(AsyncHTTPTestCase):
                   'alembic_ini_path': 'config/alembic.ini',
                   'alembic_log_config_path': 'config/logger.config',
                   'alembic_scripts': './alembic/',
-                  'process_queue_check_interval': 5,
                   'reports_dir': './tests/resources/reports',
                   'monitored_directories': ['./tests/resources/'],
                   'nextflow_log_dirs': self.nextflow_log_dirs,

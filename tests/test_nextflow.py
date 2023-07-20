@@ -20,14 +20,17 @@ def test_command():
 
     cmd_generator = NextflowCommandGenerator(config)
     result = cmd_generator.command('/path/to/runfolder')
-    assert result.command == ['nextflow', '-config', 'config/nextflow', 'run',
-                              'Molmed/summary-report-development',
-                              '-profile', 'singularity,snpseq',
-                              '--hello', '/path/to/runfolder',
-                              '--year', str(datetime.datetime.now().year),
-                              '--name', 'runfolder']
+    assert result['command'] == [
+        'nextflow',
+        '-config', 'config/nextflow',
+        'run', 'Molmed/summary-report-development',
+        '-profile', 'singularity,snpseq',
+        '--hello', '/path/to/runfolder',
+        '--year', str(datetime.datetime.now().year),
+        '--name', 'runfolder',
+    ]
 
-    assert result.environment == {'NXF_TEMP': '/tmp_foo'}
+    assert result['environment'] == {'NXF_TEMP': '/tmp_foo'}
 
 
 def test_raises_on_no_parameters_section():

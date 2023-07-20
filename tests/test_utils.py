@@ -11,7 +11,7 @@ def create_mock_nextflow_job_factory(error=False):
     if error:
         cmd = ['cat --incorrect']
     else:
-        cmd = ['echo', 'hello']
+        cmd = ['sleep', '2', ';', 'echo', 'hello']
     m.command.return_value = {'command': cmd, 'environment': {'foo': 'bar'}}
     return m
 
