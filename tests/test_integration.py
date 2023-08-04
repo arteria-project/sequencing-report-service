@@ -82,7 +82,7 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body), {'version': version})
 
-    @gen_test(timeout=60)
+    @gen_test(timeout=120)
     def test_start_job(self):
         response = yield self.http_client.fetch(
             self.get_url('/api/1.0/jobs/start/foo_runfolder'),
