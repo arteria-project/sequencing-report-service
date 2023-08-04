@@ -109,6 +109,30 @@ class TestIntegration(AsyncHTTPTestCase):
 
         self.assertEqual(status_response_body["state"], State.DONE.value)
 
+    def test_start_two_jobs(self):
+        status_links = []
+        for _ in range(2):
+            response = self.fetch(
+                '/api/1.0/jobs/start/foo_runfolder',
+                method='POST', body=json.dumps({}))
+            self.assertEqual(response.code, 202)
+            status_link = json.loads(response.body).get('link', None)
+            status_links.append(status_link)
+
+        time.sleep(2)
+
+        job_ids = []
+        for link in status_links:
+            status_response = self.fetch(link)
+            self.assertEqual(status_response.code, 200)
+            response_body = json.loads(status_response.body)
+            self.assertEqual(response_body["state"], State.STARTED.value)
+            job_ids.append(response_body["job_id"])
+
+        for job_id in job_ids:
+            self.fetch(
+                f'/api/1.0/jobs/stop/{job_id}',
+                method='POST', body=json.dumps({}))
 
     def test_stop_job(self):
         # First start the job
