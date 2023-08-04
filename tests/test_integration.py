@@ -35,9 +35,9 @@ class TestIntegration(AsyncHTTPTestCase):
         if self.db_file_path.exists:
             os.remove(self.db_file_path.name)
         if os.path.exists(self.nextflow_log_dirs):
-            shutil.rmtree(self.nextflow_log_dirs)
+            shutil.rmtree(self.nextflow_log_dirs, ignore_errors=True)
         if os.path.exists(self.config_dir):
-            shutil.rmtree(self.config_dir)
+            shutil.rmtree(self.config_dir, ignore_errors=True)
 
     def get_app(self):
         src_path = (Path(__file__) / '..' / '..').resolve()
@@ -91,6 +91,7 @@ class TestIntegration(AsyncHTTPTestCase):
         status_link = json.loads(response.body).get('link', None)
         self.assertTrue(status_link)
         status_response = yield self.http_client.fetch(status_link)
+        self.assertEqual(status_response.code, 200)
         status_response_body = json.loads(status_response.body)
         self.assertTrue(status_response_body.get('job_id'))
         self.assertTrue(status_response_body.get('state'))
@@ -102,6 +103,7 @@ class TestIntegration(AsyncHTTPTestCase):
                 State.STARTED.value,
                 ]:
             status_response = yield self.http_client.fetch(status_link)
+            self.assertEqual(status_response.code, 200)
             status_response_body = json.loads(status_response.body)
             time.sleep(1)
 

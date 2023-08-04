@@ -52,19 +52,23 @@ class TestLocalRunnerService(object):
 
         assert isinstance(local_runner_service.get_job(job_id), Job)
 
-    def test_stop(
+    @pytest.mark.asyncio
+    async def test_stop(
             self,
             nextflow_cmd_generator,
             job_repo_factory,
             nextflow_log_dirs
-        ):
+            ):
         runfolder = 'foo_runfolder'
-        local_runner_service = LocalRunnerService(job_repo_factory,
-                                                  nextflow_cmd_generator,
-                                                  nextflow_log_dirs)
-        job_id = local_runner_service.start(runfolder)
-        time.sleep(1)
-        stopped_id = local_runner_service.stop(job_id)
+        local_runner_service = LocalRunnerService(
+            job_repo_factory,
+            nextflow_cmd_generator,
+            nextflow_log_dirs,
+        )
+        with mock.patch("subprocess.Popen"):
+            job_id = local_runner_service.start(runfolder)
+            time.sleep(1)
+            stopped_id = local_runner_service.stop(job_id)
 
         assert local_runner_service.get_job(stopped_id).state == State.CANCELLED
         assert stopped_id == job_id
