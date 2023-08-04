@@ -4,11 +4,16 @@ import tempfile
 from pathlib import Path
 import os
 import shutil
+import time
+import yaml
 
-from tornado.testing import AsyncHTTPTestCase
+from arteria.web.app import AppService
+
+from tornado.testing import AsyncHTTPTestCase, gen_test
 from tornado.web import Application
 
 from sequencing_report_service.app import configure_routes
+from sequencing_report_service.models.db_models import State
 
 from sequencing_report_service import __version__ as version
 
@@ -22,6 +27,7 @@ class TestIntegration(AsyncHTTPTestCase):
         super().setUpClass()
         self.db_file_path = Path(tempfile.NamedTemporaryFile().name)
         self.nextflow_log_dirs = tempfile.mkdtemp()
+        self.config_dir = tempfile.mkdtemp()
 
     @classmethod
     def tearDownClass(self):
@@ -30,24 +36,44 @@ class TestIntegration(AsyncHTTPTestCase):
             os.remove(self.db_file_path.name)
         if os.path.exists(self.nextflow_log_dirs):
             shutil.rmtree(self.nextflow_log_dirs)
+        if os.path.exists(self.config_dir):
+            shutil.rmtree(self.config_dir)
 
     def get_app(self):
-        print(f'sqlite://{self.db_file_path.name}')
-        config = {'db_connection_string': f'sqlite:///{self.db_file_path.name}',
-                  'alembic_ini_path': 'config/alembic.ini',
-                  'alembic_log_config_path': 'config/logger.config',
-                  'alembic_scripts': './alembic/',
-                  'reports_dir': './tests/resources/reports',
-                  'monitored_directories': ['./tests/resources/'],
-                  'nextflow_log_dirs': self.nextflow_log_dirs,
-                  'nextflow_config':
-                  {'main_workflow_path': 'Molmed/summary-report-development',
-                   'nf_config': 'config/nextflow.config',
-                   'nf_profile': 'singularity,snpseq',
-                   'environment':
-                   {'NXF_TEMP': '/tmp/'},
-                   'parameters':
-                   {'hello': '${DEFAULT:runfolder_path}'}}}
+        src_path = (Path(__file__) / '..' / '..').resolve()
+        app_config = {
+            'port': 9999,
+            'db_connection_string': f'sqlite:///{self.db_file_path.name}',
+            'alembic_ini_path': str(src_path / 'config/alembic.ini'),
+            'alembic_log_config_path': str(src_path / 'config/logger.config'),
+            'alembic_scripts': str(src_path / 'alembic/'),
+            'reports_dir': str(src_path / 'tests/resources/reports'),
+            'monitored_directories': [str(src_path / 'tests/resources/')],
+            'nextflow_log_dirs': self.nextflow_log_dirs,
+            'nextflow_config': {
+                'main_workflow_path': str(src_path / 'seqreports/main.nf'),
+                'nf_config': str(src_path / 'seqreports/nextflow.config'),
+                'nf_profile': 'singularity,snpseq,test',
+                'environment': {'NXF_TEMP': '/tmp/'},
+                'parameters': {
+                    # This is only a placeholder because the service won't
+                    # accept an empty paramter list
+                    'hello': '${DEFAULT:runfolder_path}',
+                }
+            }
+        }
+
+        with open(Path(self.config_dir) / "app.config", 'w') as app_config_file:
+            app_config_file.write(yaml.dump(app_config))
+
+        shutil.copy(src_path / 'config/logger.config', self.config_dir)
+
+        app_svc = AppService.create(
+            product_name="test_delivery_service",
+            config_root=self.config_dir,
+            args=[])
+
+        config = app_svc.config_svc
         app = Application(configure_routes(config))
         return app
 
@@ -56,14 +82,31 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body), {'version': version})
 
+    @gen_test(timeout=60)
     def test_start_job(self):
-        response = self.fetch('/api/1.0/jobs/start/foo_runfolder', method='POST', body=json.dumps({}))
+        response = yield self.http_client.fetch(
+            self.get_url('/api/1.0/jobs/start/foo_runfolder'),
+            method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
         status_link = json.loads(response.body).get('link', None)
         self.assertTrue(status_link)
-        status_response = self.fetch(status_link)
-        self.assertTrue(json.loads(status_response.body).get('job_id'))
-        self.assertTrue(json.loads(status_response.body).get('state'))
+        status_response = yield self.http_client.fetch(status_link)
+        status_response_body = json.loads(status_response.body)
+        self.assertTrue(status_response_body.get('job_id'))
+        self.assertTrue(status_response_body.get('state'))
+
+        while status_response_body["state"] in [
+                State.NONE.value,
+                State.PENDING.value,
+                State.READY.value,
+                State.STARTED.value,
+                ]:
+            status_response = yield self.http_client.fetch(status_link)
+            status_response_body = json.loads(status_response.body)
+            time.sleep(1)
+
+        self.assertEqual(status_response_body["state"], State.DONE.value)
+
 
     def test_stop_job(self):
         # First start the job
