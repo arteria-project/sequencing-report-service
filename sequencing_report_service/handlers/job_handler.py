@@ -106,8 +106,7 @@ class ManyJobHandler(BaseRestHandler):
 
 class JobStartHandler(BaseRestHandler):
     """
-    Handle starting jobs. Please note that any jobs started will simply be scheduled to run
-    and that it will not be run until there is capacity in the runner to add more jobs.
+    Handle starting jobs.
     """
 
     def initialize(self, runner_service, runfolder_repo, **kwargs):
@@ -126,7 +125,7 @@ class JobStartHandler(BaseRestHandler):
         """
         try:
             path = self.runfolder_repo.get_runfolder(runfolder)
-            job_id = self.runner_service.schedule(path)
+            job_id = self.runner_service.start(path)
             self.set_status(status_code=ACCEPTED)
             self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
                                                           self.request.host,

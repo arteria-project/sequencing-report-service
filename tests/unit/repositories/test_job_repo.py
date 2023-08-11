@@ -7,7 +7,6 @@ import pytest
 
 from sequencing_report_service.models.db_models import SQLAlchemyBase, State
 from sequencing_report_service.repositiories.job_repo import JobRepository
-from sequencing_report_service.models.command import CommandWithEnv
 
 
 class TestJobRepo(object):
@@ -24,14 +23,14 @@ class TestJobRepo(object):
 
     def test_add_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            job = repo.add_job(command_with_env=CommandWithEnv(command=['foo'], environment={}))
+            job = repo.add_job(command_with_env={'command': ['foo'], 'environment': {}})
             assert job.command == ['foo']
             assert job.state == State.PENDING
 
     def test_get_jobs(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            repo.add_job(command_with_env=CommandWithEnv(command=['foo'], environment={}))
-            repo.add_job(command_with_env=CommandWithEnv(command=['bar'], environment={}))
+            repo.add_job(command_with_env={'command': ['foo'], 'environment': {}})
+            repo.add_job(command_with_env={'command': ['bar'], 'environment': {}})
             jobs = repo.get_jobs()
             assert len(jobs) == 2
             assert list(map(lambda x: x.command, jobs)) == [['foo'], ['bar']]
@@ -48,8 +47,8 @@ class TestJobRepo(object):
 
     def test_get_one_pending_job(self, db_session_factory):
         with JobRepository(db_session_factory) as repo:
-            repo.add_job(command_with_env=CommandWithEnv(command=['foo'], environment={}))
-            repo.add_job(command_with_env=CommandWithEnv(command=['bar'], environment={}))
+            repo.add_job(command_with_env={'command': ['foo'], 'environment': {}})
+            repo.add_job(command_with_env={'command': ['bar'], 'environment': {}})
 
             repo.set_state_of_job(1, State.CANCELLED)
             job = repo.get_one_pending_job()

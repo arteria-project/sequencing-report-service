@@ -8,7 +8,6 @@ import datetime
 from pathlib import Path
 
 from sequencing_report_service.exceptions import NextflowConfigError
-from sequencing_report_service.models.command import CommandWithEnv
 
 log = logging.getLogger(__name__)
 
@@ -82,6 +81,6 @@ class NextflowCommandGenerator():
             runfolder = Path(runfolder)
         cmd = self._cmd + self._construct_nf_param_list(runfolder)
         env_config = self._config_dict.get('environment')
-        nf_command = CommandWithEnv(command=cmd, environment=env_config)
+        nf_command = {'command': cmd, 'environment': env_config}
         log.debug("Generated command: %s", nf_command)
         return nf_command

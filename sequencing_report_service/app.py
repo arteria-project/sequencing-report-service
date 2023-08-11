@@ -123,13 +123,9 @@ def configure_routes(config):
     reports_dir = get_key_from_config(config, 'reports_dir')
     reports_repo = ReportsRepository(reports_dir=reports_dir)
 
-    # Convert the interval to seconds
-    process_queue_check_interval = int(get_key_from_config(config, 'process_queue_check_interval')) * 1000
-
     with job_repo_factory() as job_repo:
         job_repo.clear_out_stale_jobs_at_startup()
 
-    PeriodicCallback(local_runner_service.process_job_queue, process_queue_check_interval).start()
     return routes(config=config,
                   runner_service=local_runner_service,
                   runfolder_repo=runfolder_repo,

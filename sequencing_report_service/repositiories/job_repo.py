@@ -52,9 +52,9 @@ class JobRepository:
         :param command_with_env: to start job with
         :return: the created Job
         """
-        job = Job(command=command_with_env.command,
+        job = Job(command=command_with_env['command'],
                   state=State.PENDING,
-                  environment=command_with_env.environment)
+                  environment=command_with_env['environment'])
         self.session.add(job)
         self.session.commit()
         return job
@@ -80,7 +80,7 @@ class JobRepository:
         :param job_id:
         :return: a Job, or None if it does not exist
         """
-        return self.session.query(Job).filter(Job.job_id == job_id).one_or_none()
+        return self.session.query(Job).get(job_id)
 
     def get_one_pending_job(self):
         """
@@ -108,20 +108,18 @@ class JobRepository:
         :param cmd_log: Optionally add log for the job
         :return: The job which state was changed, or none if no (or multiple) jobs with id were found.
         """
-        try:
-            job = self.session.query(Job).filter(Job.job_id == job_id).one()
-            job.state = state
-            if cmd_log:
-                job.log = cmd_log
-            self.session.commit()
-            return job
-        except NoResultFound:
+        job = self.session.query(Job).get(job_id)
+
+        if not job:
             log.error("Found no job with id: %s.", job_id)
-        except MultipleResultsFound as error:
-            log.error("Found multiple results with id: %s. Something is seriously "
-                      "wrong in the database...", job_id)
-            raise error
-        return None
+            return None
+
+        job.state = state
+        if cmd_log:
+            job.log = cmd_log
+
+        self.session.commit()
+        return job
 
     def set_pid_of_job(self, job_id, pid):
         """
@@ -130,18 +128,16 @@ class JobRepository:
         :param pid: to set
         :return: the Job changed or None if no job was found
         """
-        try:
-            job = self.session.query(Job).filter(Job.job_id == job_id).one()
-            job.pid = pid
-            self.session.commit()
-            return Job
-        except NoResultFound:
+        job = self.session.query(Job).get(job_id)
+
+        if not job:
             log.error("Found no job with id: %s.", job_id)
-        except MultipleResultsFound as error:
-            log.error("Found multiple results with id: %s. Something is seriously "
-                      "wrong in the database...", job_id)
-            raise error
-        return None
+            return None
+
+        job.pid = pid
+
+        self.session.commit()
+        return Job
 
     def clear_out_stale_jobs_at_startup(self):
         """
