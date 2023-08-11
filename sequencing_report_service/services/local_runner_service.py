@@ -56,7 +56,7 @@ class LocalRunnerService:
             env = {**sys_env, **job_env}
 
             working_dir = os.path.join(
-                self._nextflow_log_dirs, str(job.job_id))
+                self._nextflow_log_dirs, job_id)
             os.mkdir(working_dir)
             nxf_log = os.path.join(working_dir, "nextflow.out")
             nxf_log_fh = open(nxf_log, "w", encoding="utf-8")
