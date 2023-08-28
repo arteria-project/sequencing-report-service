@@ -58,7 +58,9 @@ class NextflowCommandGenerator():
         defaults = {'runfolder_path': str(runfolder_path),
                     'runfolder_name': runfolder_path.name,
                     'current_year': datetime.datetime.now().year}
-        conf = configparser.ConfigParser(defaults=defaults, interpolation=configparser.ExtendedInterpolation())
+        conf = configparser.ConfigParser(
+                defaults=defaults,
+                interpolation=configparser.ExtendedInterpolation())
         params_as_conf_dict = {'nextflow_config': self._raw_params}
         conf.read_dict(params_as_conf_dict)
 
@@ -71,6 +73,25 @@ class NextflowCommandGenerator():
 
         return lst
 
+    def _construct_environment(self, runfolder_path):
+        """
+        Interpolates default values in the environment config
+        """
+        defaults = {'runfolder_path': str(runfolder_path),
+                    'runfolder_name': runfolder_path.name,
+                    'current_year': datetime.datetime.now().year}
+        conf = configparser.ConfigParser(
+                defaults=defaults,
+                interpolation=configparser.ExtendedInterpolation())
+        conf.optionxform = str
+        env_as_conf_dict = {'environment': self._config_dict.get('environment')}
+        conf.read_dict(env_as_conf_dict)
+
+        return {
+            key: conf['environment'][key]
+            for key in env_as_conf_dict['environment']
+        }
+
     def command(self, runfolder):
         """
         Return a list containing the command to run with the specified runfolder
@@ -80,7 +101,7 @@ class NextflowCommandGenerator():
         if not isinstance(runfolder, Path):
             runfolder = Path(runfolder)
         cmd = self._cmd + self._construct_nf_param_list(runfolder)
-        env_config = self._config_dict.get('environment')
+        env_config = self._construct_environment(runfolder)
         nf_command = {'command': cmd, 'environment': env_config}
         log.debug("Generated command: %s", nf_command)
         return nf_command
