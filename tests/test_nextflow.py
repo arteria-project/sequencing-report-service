@@ -11,7 +11,10 @@ def test_command():
               'nf_profile': 'singularity,snpseq',
               'environment':
               {
-                  'NXF_TEMP': '/tmp_foo'
+                  'NXF_TEMP': '/tmp_foo',
+                  'TEST_RUNFOLDER': '${DEFAULT:runfolder_name}',
+                  'TEST_PATH': '${DEFAULT:runfolder_path}',
+                  'TEST_YEAR': '${DEFAULT:current_year}',
               },
               'parameters':
                   {'hello': '${DEFAULT:runfolder_path}',
@@ -30,7 +33,12 @@ def test_command():
         '--name', 'runfolder',
     ]
 
-    assert result['environment'] == {'NXF_TEMP': '/tmp_foo'}
+    assert result['environment'] == {
+        'NXF_TEMP': '/tmp_foo',
+        'TEST_RUNFOLDER': 'runfolder',
+        'TEST_PATH': '/path/to/runfolder',
+        'TEST_YEAR': str(datetime.datetime.now().year),
+    }
 
 
 def test_raises_on_no_parameters_section():
