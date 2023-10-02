@@ -51,51 +51,53 @@ class LocalRunnerService:
     async def _start_process(self, job_id):
         with self._job_repo_factory() as job_repo:
             job = job_repo.get_job(job_id)
-            sys_env = os.environ.copy() or {}
-            job_env = job.environment or {}
-            env = {**sys_env, **job_env}
+            assert job
 
             working_dir = os.path.join(
                 self._nextflow_log_dirs, str(job_id))
             os.mkdir(working_dir)
             nxf_log = os.path.join(working_dir, "nextflow.out")
-            nxf_log_fh = open(nxf_log, "w", encoding="utf-8")
-
+            sys_env = os.environ.copy() or {}
+            job_env = job.environment or {}
+            env = {**sys_env, **job_env}
             cmd = shlex.split(shlex.quote(" ".join(job.command)))
-            log.debug("Will start command %s", cmd)
-            process = Subprocess(
-                cmd,
-                stdout=nxf_log_fh,
-                stderr=nxf_log_fh,
-                env=env,
-                cwd=working_dir,
-                shell=True,
-            )
 
-            job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
-            job_repo.set_pid_of_job(job.job_id, process.pid)
+            try:
+                with open(nxf_log, "w", encoding="utf-8") as nxf_log_fh:
+                    log.debug("Will start command %s", cmd)
+                    process = Subprocess(
+                        cmd,
+                        stdout=nxf_log_fh,
+                        stderr=nxf_log_fh,
+                        env=env,
+                        cwd=working_dir,
+                        shell=True,
+                    )
 
-            return_code = await process.wait_for_exit()
+                    job_repo.set_state_of_job(job_id=job.job_id, state=State.STARTED)
+                    job_repo.set_pid_of_job(job.job_id, process.pid)
 
-            nxf_log_fh.close()
+                    await process.wait_for_exit()
 
-            with open(nxf_log, encoding="utf-8") as log_file:
-                cmd_log = log_file.read()
-            if return_code == 0:
+                with open(nxf_log, encoding="utf-8") as log_file:
+                    cmd_log = log_file.read()
+
                 log.info("Successfully completed process: %s", job.command)
                 job_repo.set_state_of_job(
                     job_id=job.job_id,
                     state=State.DONE,
                     cmd_log=cmd_log,
                 )
-            else:
-                log.error(
-                    "Found non-zero exit code: %s for command: %s",
-                    return_code,
-                    job.command,
-                )
+            except subprocess.CalledProcessError:
+                job = job_repo.get_job(job_id)
+                if job.state == State.CANCELLED:
+                    return
+
+                with open(nxf_log, encoding="utf-8") as log_file:
+                    cmd_log = log_file.read()
+                log.exception('Job failed with the following error:')
                 job_repo.set_state_of_job(
-                    job_id=job.job_id,
+                    job_id=job_id,
                     state=State.ERROR,
                     cmd_log=cmd_log,
                 )
@@ -128,8 +130,8 @@ class LocalRunnerService:
                 return job.job_id
             if job and job.state == State.STARTED:
                 log.info("Will stop the currently running job.")
-                os.kill(job.pid, signal.SIGTERM)
                 job_repo.set_state_of_job(job_id, State.CANCELLED)
+                os.kill(job.pid, signal.SIGTERM)
                 return job.job_id
             log.debug("Found no job to cancel with with job id: {}. Or it was not in a cancellable state.")
             raise UnableToStopJob()
