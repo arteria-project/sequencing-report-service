@@ -72,3 +72,59 @@ class TestLocalRunnerService(object):
 
         assert local_runner_service.get_job(stopped_id).state == State.CANCELLED
         assert stopped_id == job_id
+
+    @pytest.mark.asyncio
+    async def test_start_process(
+            self,
+            nextflow_cmd_generator,
+            job_repo_factory,
+            nextflow_log_dirs
+            ):
+        local_runner_service = LocalRunnerService(
+            job_repo_factory,
+            nextflow_cmd_generator,
+            nextflow_log_dirs,
+        )
+
+        command_with_env = {
+            "command": ["sleep", "1"],
+            "environment": {},
+        }
+
+        with local_runner_service._job_repo_factory() as job_repo:
+            job = job_repo.add_job(command_with_env=command_with_env)
+            job_id = job.job_id
+            assert job.state == State.PENDING
+
+            await local_runner_service._start_process(job_id)
+
+            job = job_repo.get_job(job_id)
+            assert job.state == State.DONE
+
+    @pytest.mark.asyncio
+    async def test_start_process_fail(
+            self,
+            nextflow_cmd_generator,
+            job_repo_factory,
+            nextflow_log_dirs
+            ):
+        local_runner_service = LocalRunnerService(
+            job_repo_factory,
+            nextflow_cmd_generator,
+            nextflow_log_dirs,
+        )
+
+        command_with_env = {
+            "command": ["fakecommand"],
+            "environment": {},
+        }
+
+        with local_runner_service._job_repo_factory() as job_repo:
+            job = job_repo.add_job(command_with_env=command_with_env)
+            job_id = job.job_id
+            assert job.state == State.PENDING
+
+            await local_runner_service._start_process(job_id)
+
+            job = job_repo.get_job(job_id)
+            assert job.state == State.ERROR
