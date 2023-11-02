@@ -41,6 +41,7 @@ class TestIntegration(AsyncHTTPTestCase):
 
     def get_app(self):
         src_path = (Path(__file__) / '..' / '..').resolve()
+
         app_config = {
             'port': 9999,
             'db_connection_string': f'sqlite:///{self.db_file_path.name}',
@@ -50,22 +51,35 @@ class TestIntegration(AsyncHTTPTestCase):
             'reports_dir': str(src_path / 'tests/resources/reports'),
             'monitored_directories': [str(src_path / 'tests/resources/')],
             'nextflow_log_dirs': self.nextflow_log_dirs,
-            'nextflow_config': {
-                'main_workflow_path': str(src_path / 'seqreports/main.nf'),
-                'nf_config': str(src_path / 'seqreports/nextflow.config'),
-                'nf_profile': 'singularity,snpseq,test',
-                'environment': {'NXF_TEMP': '/tmp/'},
-                'parameters': {
-                    # This is only a placeholder because the service won't
-                    # accept an empty paramter list
-                    'hello': '${DEFAULT:runfolder_path}',
-                }
-            }
+            'pipeline_config_dir': f'{self.config_dir}/pipeline_config/',
+        }
+
+        pipeline_config = {
+            'main_workflow_path': str(src_path / 'seqreports/main.nf'),
+            'nf_config': str(src_path / 'seqreports/nextflow.config'),
+            'nf_profile': 'singularity,snpseq,test',
+            'environment': {'NXF_TEMP': '/tmp/'},
+            'parameters': {
+                # This is only a placeholder because the service won't
+                # accept an empty parameter list
+                'hello': '{runfolder_path}',
+            },
         }
 
         with open(Path(self.config_dir) / "app.config", 'w') as app_config_file:
             app_config_file.write(yaml.dump(app_config))
 
+        Path(app_config["pipeline_config_dir"]).mkdir(exist_ok=True)
+        with open(
+                    Path(self.config_dir) / "pipeline_config" / "seqreports.yml",
+                    'w'
+                ) as pipeline_config_file:
+            pipeline_config_file.write(yaml.dump(pipeline_config))
+
+        shutil.copyfile(
+            src_path / "config" / "pipeline_config" / "schema.json",
+            Path(app_config["pipeline_config_dir"]) / "schema.json"
+        )
         shutil.copy(src_path / 'config/logger.config', self.config_dir)
 
         app_svc = AppService.create(

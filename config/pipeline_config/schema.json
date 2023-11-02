@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "required": [
+    "main_workflow_path",
+    "nf_config",
+    "nf_profile",
+    "environment",
+    "parameters"
+  ],
+  "properties": {
+    "main_workflow_path": {"type": "string"},
+    "nf_config": {"type": "string"},
+    "nf_profile": {"type": "string"},
+    "environment": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    }
+  },
+  "additionalProperties": false
+}

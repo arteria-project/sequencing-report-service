@@ -111,7 +111,8 @@ def configure_routes(config):
     session_factory = scoped_session(sessionmaker())
     session_factory.configure(bind=engine)
 
-    nextflow_command_generator = NextflowCommandGenerator(config['nextflow_config'])
+    nextflow_command_generator = NextflowCommandGenerator(
+        config['pipeline_config_dir'])
 
     job_repo_factory = functools.partial(JobRepository, session_factory=session_factory)
     local_runner_service = LocalRunnerService(job_repo_factory,
