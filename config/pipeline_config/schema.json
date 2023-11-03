@@ -3,9 +3,7 @@
   "required": [
     "main_workflow_path",
     "nf_config",
-    "nf_profile",
-    "environment",
-    "parameters"
+    "nf_profile"
   ],
   "properties": {
     "main_workflow_path": {"type": "string"},
