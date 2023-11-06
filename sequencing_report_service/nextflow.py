@@ -35,7 +35,11 @@ def interpolate_variables(config, defaults):
     """
     config = copy.deepcopy(config)
     try:
-        for section in ["environment", "parameters"]:
+        for section in [
+                    "environment",
+                    "pipeline_parameters",
+                    "nextflow_parameters",
+                ]:
             for key, value in config[section].items():
                 config[section][key] = value.format(**defaults)
     except KeyError:
@@ -98,14 +102,22 @@ class NextflowCommandGenerator():
 
         cmd = [
             'nextflow',
-            '-config', config['nf_config'],
             'run', config['main_workflow_path'],
-            '-profile', config['nf_profile'],
         ]
 
         cmd += [
             arg
-            for key, value in config["parameters"].items()
+            for key, value in config["nextflow_parameters"].items()
+            for arg in (
+                [f"-{key}", f"{value}"]
+                if value else
+                [f"-{key}"]
+            )
+        ]
+
+        cmd += [
+            arg
+            for key, value in config["pipeline_parameters"].items()
             for arg in [f"--{key}", f"{value}"]
         ]
 

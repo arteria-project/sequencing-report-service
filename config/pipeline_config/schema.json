@@ -1,19 +1,19 @@
 {
   "type": "object",
   "required": [
-    "main_workflow_path",
-    "nf_config",
-    "nf_profile"
+    "main_workflow_path"
   ],
   "properties": {
     "main_workflow_path": {"type": "string"},
-    "nf_config": {"type": "string"},
-    "nf_profile": {"type": "string"},
     "environment": {
       "type": "object",
       "additionalProperties": {"type": "string"}
     },
-    "parameters": {
+    "pipeline_parameters": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    },
+    "nextflow_parameters": {
       "type": "object",
       "additionalProperties": {"type": "string"}
     }

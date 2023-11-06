@@ -56,10 +56,12 @@ class TestIntegration(AsyncHTTPTestCase):
 
         pipeline_config = {
             'main_workflow_path': str(src_path / 'seqreports/main.nf'),
-            'nf_config': str(src_path / 'seqreports/nextflow.config'),
-            'nf_profile': 'singularity,snpseq,test',
             'environment': {'NXF_TEMP': '/tmp/'},
-            'parameters': {
+            'nextflow_parameters': {
+                'config': str(src_path / 'seqreports/nextflow.config'),
+                'profile': 'singularity,snpseq,test',
+            },
+            'pipeline_parameters': {
                 # This is only a placeholder because the service won't
                 # accept an empty parameter list
                 'hello': '{runfolder_path}',

@@ -12,15 +12,17 @@ from sequencing_report_service.nextflow import NextflowCommandGenerator, Nextflo
 def test_command():
     config = {
         'main_workflow_path': 'Molmed/summary-report-development',
-        'nf_config': 'config/nextflow',
-        'nf_profile': 'singularity,snpseq',
+        'nextflow_parameters': {
+            'config': 'config/nextflow',
+            'profile': 'singularity,snpseq',
+        },
         'environment': {
             'NXF_TEMP': '/tmp_foo',
             'TEST_RUNFOLDER': '{runfolder_name}',
             'TEST_PATH': '{runfolder_path}',
             'TEST_YEAR': '{current_year}',
         },
-        'parameters': {
+        'pipeline_parameters': {
             'hello': '{runfolder_path}',
             'year': '{current_year}',
             'name': '{runfolder_name}',
@@ -50,8 +52,8 @@ def test_command():
         for result in results:
             assert result['command'] == [
                 'nextflow',
-                '-config', 'config/nextflow',
                 'run', 'Molmed/summary-report-development',
+                '-config', 'config/nextflow',
                 '-profile', 'singularity,snpseq',
                 '--hello', '/path/to/runfolder',
                 '--name', 'runfolder',
