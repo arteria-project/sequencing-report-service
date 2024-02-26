@@ -16,7 +16,8 @@
     "nextflow_parameters": {
       "type": "object",
       "additionalProperties": {"type": "string"}
-    }
+    },
+    "input_samplesheet": { "type": "string" }
   },
   "additionalProperties": false
 }

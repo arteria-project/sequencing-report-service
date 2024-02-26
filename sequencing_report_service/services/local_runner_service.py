@@ -102,14 +102,30 @@ class LocalRunnerService:
                     cmd_log=cmd_log,
                 )
 
-    def start(self, runfolder):
+    def start(
+        self,
+        pipeline,
+        runfolder_path,
+        input_samplesheet="",
+        ext_args=None,
+    ):
         """
         Start a new job for the specified runfolder
-        :param runfolder:
+        :param pipeline: name of the pipeline to run
+        :param runfolder_path: path to the runfolder to process
+        :param ext_args: extra args to append to the nextflow command
         :return: the job id of the started job
         """
         with self._job_repo_factory() as job_repo:
-            nf_cmd = self._nextflow_jobs_factory.command(runfolder)
+            nf_cmd = self._nextflow_jobs_factory.command(
+                pipeline,
+                runfolder_path,
+                input_samplesheet=input_samplesheet,
+            )
+
+            if ext_args:
+                nf_cmd['command'] += ext_args
+
             job_id = job_repo.add_job(command_with_env=nf_cmd).job_id
         log.debug("calling start_process with id %s" % str(job_id))
         loop = asyncio.get_running_loop()

@@ -40,8 +40,9 @@ def interpolate_variables(config, defaults):
                     "pipeline_parameters",
                     "nextflow_parameters",
                 ]:
-            for key, value in config[section].items():
-                config[section][key] = value.format(**defaults)
+            if section in config:
+                for key, value in config[section].items():
+                    config[section][key] = value.format(**defaults)
     except KeyError:
         # This may happen if some format strings contain keys that are not in
         # `defaults`.
@@ -65,20 +66,31 @@ class NextflowCommandGenerator():
     def __init__(self, config_dir):
         self.config_dir = Path(config_dir)
 
-    def command(self, runfolder_path, pipeline="seqreports"):
+    def _get_config(
+        self,
+        pipeline,
+        runfolder_path,
+        input_samplesheet,
+    ):
         """
-        Returns nextflow command with parameter as specified in the
-        corresponding config file.
+        Fetches the config data for the given pipeline.
+
+        This will also format keywords `{current_year}`, `{runfolder_name}`,
+        `{runfolder_path}` and `{input_samplesheet}`.
 
         Parameters
         ----------
-        runfolder_path: str
-            path to the runfolder to process
         pipeline: str
             name of the pipeline to use
-        """
-        runfolder_path = Path(runfolder_path)
+        runfolder_path: str
+            path to the runfolder to process
+        input_samplesheet: str
+            content of the input samplesheet
 
+        Returns
+        -------
+        config: dict
+       """
         try:
             with open(self.config_dir / f"{pipeline}.yml", "r") as config_file:
                 config = yaml.safe_load(config_file.read())
@@ -89,16 +101,50 @@ class NextflowCommandGenerator():
             log.exception('')
             raise
 
-        config = interpolate_variables(
-            config,
-            {
-                'runfolder_path': str(runfolder_path),
-                'runfolder_name': runfolder_path.name,
-                'current_year': datetime.datetime.now().year
-            }
-        )
+        runfolder_path = Path(runfolder_path)
+        defaults = {
+            "current_year": datetime.datetime.now().year,
+            "runfolder_path": str(runfolder_path),
+            "runfolder_name": runfolder_path.name,
+        }
 
-        env_config = config["environment"]
+        input_samplesheet = input_samplesheet or config.get("input_samplesheet", "")
+        if input_samplesheet:
+            try:
+                input_samplesheet = input_samplesheet.format(**defaults)
+            except KeyError:
+                log.exception('')
+                raise
+
+            input_samplesheet_path = runfolder_path / f"{pipeline}_samplesheet.csv"
+            with open(input_samplesheet_path, "w") as f:
+                f.write(input_samplesheet)
+            defaults["input_samplesheet"] = input_samplesheet_path
+
+        return interpolate_variables(config, defaults)
+
+    def command(
+        self,
+        pipeline,
+        runfolder_path,
+        input_samplesheet="",
+    ):
+        """
+        Returns nextflow command to run the requested pipeline
+        with parameter as specified in the corresponding config file.
+
+        Parameters
+        ----------
+        pipeline: str
+            name of the pipeline to use
+        runfolder_path: str
+            path to the runfolder to process
+        input_samplesheet: str
+            content of the input samplesheet
+        """
+        config = self._get_config(pipeline, runfolder_path, input_samplesheet)
+
+        env_config = config.get("environment", {})
 
         cmd = [
             'nextflow',
@@ -107,7 +153,7 @@ class NextflowCommandGenerator():
 
         cmd += [
             arg
-            for key, value in config["nextflow_parameters"].items()
+            for key, value in config.get("nextflow_parameters", {}).items()
             for arg in (
                 [f"-{key}", f"{value}"]
                 if value else
@@ -117,9 +163,13 @@ class NextflowCommandGenerator():
 
         cmd += [
             arg
-            for key, value in config["pipeline_parameters"].items()
+            for key, value in config.get("pipeline_parameters", {}).items()
             for arg in [f"--{key}", f"{value}"]
         ]
 
         log.debug("Generated command: %s", cmd)
-        return {'command': cmd, 'environment': env_config}
+
+        return {
+            'command': cmd,
+            'environment': env_config,
+        }

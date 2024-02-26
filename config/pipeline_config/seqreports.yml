@@ -6,6 +6,7 @@ main_workflow_path: ./seqreports/main.nf
 # - {runfolder_name}
 # - {runfolder_path}
 # - {current_year}
+# - {input_samplesheet}
 environment:
   NXF_TEMP: /tmp/
   NXF_WORK: /tmp/nf_work/

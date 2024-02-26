@@ -39,16 +39,17 @@ class TestLocalRunnerService(object):
             job_repo_factory,
             nextflow_log_dirs,
             ):
+        pipeline = "seqreports"
         runfolder = 'foo_runfolder'
         local_runner_service = LocalRunnerService(
             job_repo_factory,
             nextflow_cmd_generator,
             nextflow_log_dirs,
         )
-        command, environment = nextflow_cmd_generator.command(runfolder).values()
+        command, environment = nextflow_cmd_generator.command(pipeline, runfolder).values()
 
         with mock.patch("subprocess.Popen"):
-            job_id = local_runner_service.start(runfolder)
+            job_id = local_runner_service.start(pipeline, runfolder)
 
         assert isinstance(local_runner_service.get_job(job_id), Job)
 
@@ -59,6 +60,7 @@ class TestLocalRunnerService(object):
             job_repo_factory,
             nextflow_log_dirs
             ):
+        pipeline = "seqreports"
         runfolder = 'foo_runfolder'
         local_runner_service = LocalRunnerService(
             job_repo_factory,
@@ -66,7 +68,7 @@ class TestLocalRunnerService(object):
             nextflow_log_dirs,
         )
         with mock.patch("subprocess.Popen"):
-            job_id = local_runner_service.start(runfolder)
+            job_id = local_runner_service.start(pipeline, runfolder)
             time.sleep(1)
             stopped_id = local_runner_service.stop(job_id)
 

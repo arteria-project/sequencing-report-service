@@ -66,7 +66,9 @@ class ReportsRepository:
     def _find_runfolder_dir(self, runfolder):
         result = self._bf_search(runfolder, self._reports_dir, 3)
         if not result:
-            raise RunfolderNotFound
+            raise RunfolderNotFound(
+                f"Could not identify a runfolder with the name: "
+                f"{runfolder} in any of the monitored directories.")
         return result
 
     def get_report_with_version(self, runfolder, version):
