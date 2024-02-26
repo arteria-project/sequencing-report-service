@@ -40,7 +40,7 @@ def routes(**kwargs):
     """
     return [
         url(r"/api/1.0/version", VersionHandler, name="version", kwargs=kwargs),
-        url(r"/api/1.0/jobs/start/(?!.*\/)(.*)$", JobStartHandler, name="job_start", kwargs=kwargs),
+        url(r"/api/1.0/jobs/start/(\w+)/(?!.*\/)(.*)$", JobStartHandler, name="job_start", kwargs=kwargs),
         url(r"/api/1.0/jobs/stop/(\d+)$", JobStopHandler, name="job_stop", kwargs=kwargs),
         url(r"/api/1.0/jobs/(\d+)$", OneJobHandler, name="one_job", kwargs=kwargs),
         url(r"/api/1.0/jobs/$", ManyJobHandler, name="many_jobs", kwargs=kwargs),

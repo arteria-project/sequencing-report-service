@@ -48,7 +48,7 @@ class TestJobHandler(AsyncHTTPTestCase):
         self.assertEqual(resp_dict['state'], 'pending')
 
     def test_start_job(self):
-        response = self.fetch('/api/1.0/jobs/start/foo', method='POST', body=json.dumps({}))
+        response = self.fetch('/api/1.0/jobs/start/foo/bar', method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
         self.assertDictEqual(json.loads(response.body),
                              {'link':

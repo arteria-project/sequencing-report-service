@@ -16,9 +16,7 @@ from sequencing_report_service.exceptions import UnableToStopJob, RunfolderNotFo
 
 class OneJobHandler(BaseRestHandler):
     """
-    Handle checking state of jobs. Will return a representation of a job as json e.g.:
-        {"job_id": 1, "runfolder": "foo", "pid": 3837, "state": "done",
-        "created": "2018-11-27 12:06:26", "updated": "2018-11-27 12:06:44"}
+    Handle checking state of a single job.
     """
 
     def initialize(self, runner_service, **kwargs):
@@ -29,9 +27,18 @@ class OneJobHandler(BaseRestHandler):
 
     def get(self, job_id):
         """
-        Will return the job object corresponding to a specific job id. It will return or the form:
-        {"job_id": 1, "runfolder": "foo", "pid": 3837, "state": "done",
-         "created": "2018-11-27 12:06:26", "updated": "2018-11-27 12:06:44"}
+        Will return the job object corresponding to a specific job id. It will
+        return or the form:
+        {
+            "job_id": 1,
+            "command": "nextflow run socks --style emoji",
+            "environment": "NXF_TEMP=/tmp",
+            "pid": 3837,
+            "state": "done",
+            "created": "2018-11-27 12:06:26",
+            "updated": "2018-11-27 12:06:44",
+            "log": "",
+        }
         """
         job = self.runner_service.get_job(job_id)
         if job:
@@ -43,29 +50,7 @@ class OneJobHandler(BaseRestHandler):
 
 class ManyJobHandler(BaseRestHandler):
     """
-    Handles checking the state of jobs.
-    TODO Add the option of filtering the jobs returned, e.g. for state
-    Returns a json object on the following format:
-    {
-    "jobs": [
-        {
-            "created": "2018-11-27 12:06:26",
-            "job_id": 1,
-            "pid": 3837,
-            "runfolder": "foo",
-            "state": "done",
-            "updated": "2018-11-27 12:06:44"
-        },
-        {
-            "created": "2018-11-27 12:09:59",
-            "job_id": 2,
-            "pid": 4394,
-            "runfolder": "foo",
-            "state": "done",
-            "updated": "2018-11-27 12:11:11"
-        }
-        ]
-    }
+    Handles checking the state of all jobs
     """
 
     def initialize(self, runner_service, **kwargs):
@@ -76,25 +61,30 @@ class ManyJobHandler(BaseRestHandler):
 
     def get(self):
         """
-        Will return the status of all jobs (or fewer depending on filter). The return json has the format:
+        Will return the status of all jobs (or fewer depending on filter). The
+        return json has the format:
 
         {
         "jobs": [
             {
-                "created": "2018-11-27 12:06:26",
                 "job_id": 1,
+                "command": "nextflow run socks --style emoji",
+                "environment": "NXF_TEMP=/tmp",
                 "pid": 3837,
-                "runfolder": "foo",
                 "state": "done",
-                "updated": "2018-11-27 12:06:44"
+                "created": "2018-11-27 12:06:26",
+                "updated": "2018-11-27 12:06:44",
+                "log": "",
             },
             {
-                "created": "2018-11-27 12:09:59",
                 "job_id": 2,
+                "command": "nextflow run socks --style ascii",
+                "environment": "NXF_TEMP=/tmp",
                 "pid": 4394,
-                "runfolder": "foo",
                 "state": "done",
+                "created": "2018-11-27 12:09:59",
                 "updated": "2018-11-27 12:11:11"
+                "log": "",
             }
             ]
         }
@@ -116,31 +106,49 @@ class JobStartHandler(BaseRestHandler):
         self.runner_service = runner_service
         self.runfolder_repo = runfolder_repo
 
-    def post(self, runfolder):
+    def post(self, pipeline, runfolder):
         """
-        Posting to this endpoint will start a job for the provided runfolder, e.g.:
-            curl -X POST -w'\n' localhost:9999/api/1.0/jobs/start/foo
+        Posting to this endpoint will start a job for the provided pipeline on
+        the provided runfolder, e.g.:
+            curl -X POST -w'\n' localhost:9999/api/1.0/jobs/start/socks/foo_runfolder
         The endpoint will then return a link where the run can be monitored:
             {"link": "http://localhost:9999/api/1.0/jobs/130"}
+
+        This endpoint also support the following parameters:
+            - `input_samplesheet`: content of the nf-core input samplesheet to
+            input to the pipeline
+            - `ext_args`: extra arguments to pass to the pipeline
         """
         try:
-            path = self.runfolder_repo.get_runfolder(runfolder)
-            job_id = self.runner_service.start(path)
+            request_data = self.body_as_object()
+            runfolder_path = self.runfolder_repo.get_runfolder(runfolder)
+
+            job_id = self.runner_service.start(
+                    pipeline,
+                    runfolder_path=runfolder_path,
+                    input_samplesheet=request_data.get("input_samplesheet", ""),
+                    ext_args=request_data.get("ext_args", "").split(" "),
+                    )
             self.set_status(status_code=ACCEPTED)
-            self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
-                                                          self.request.host,
-                                                          self.reverse_url('one_job', job_id))})
-        except RunfolderNotFound as exc:
+            self.write_object(
+                {
+                    "link":
+                        f"{self.request.protocol}://"
+                        f"{self.request.host}"
+                        f"{self.reverse_url('one_job', job_id)}"
+                }
+            )
+        except (RunfolderNotFound, FileNotFoundError) as exc:
             raise HTTPError(
-                status_code=FORBIDDEN,
-                log_message=f"Could not not identify runfolder ${runfolder} in any of the monitored directories.") \
-                from exc
+                status_code=NOT_FOUND,
+                log_message=str(exc)
+            ) from exc
 
 
 class JobStopHandler(BaseRestHandler):
     """
-    Handle stopping jobs. This will stops jobs which are eligible for stopping, i.e. jobs which have pending or
-    started as their state.
+    Handle stopping jobs. This will stops jobs which are eligible for stopping,
+    i.e. jobs which have pending or started as their state.
     """
 
     def initialize(self, **kwargs):
@@ -152,11 +160,13 @@ class JobStopHandler(BaseRestHandler):
     def post(self, job_id):
         """
         curl -X POST -w'\n' localhost:9999/api/1.0/jobs/stop/1
-        Will return an endpoint at which the state of the job can be checked on the format:
+        Will return an endpoint at which the state of the job can be checked on
+        the format:
             {"link": "http://localhost:9999/api/1.0/jobs/1"}
-        If it was possible to stop the job the status code will be 202 (ACCEPTED), and if it was not
-        possible to stop the job it will be 403 (FORBIDDEN). If there was no corresponding job_id, the
-        status code will be 404 (NOT_FOUND)
+        If it was possible to stop the job the status code will be 202
+        (ACCEPTED), and if it was not possible to stop the job it will be 403
+        (FORBIDDEN). If there was no corresponding job_id, the status code will
+        be 404 (NOT_FOUND)
         """
         if not self.runner_service.get_job(job_id):
             raise HTTPError(NOT_FOUND)
