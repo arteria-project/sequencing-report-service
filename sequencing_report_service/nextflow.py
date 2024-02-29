@@ -164,7 +164,11 @@ class NextflowCommandGenerator():
         cmd += [
             arg
             for key, value in config.get("pipeline_parameters", {}).items()
-            for arg in [f"--{key}", f"{value}"]
+            for arg in (
+                [f"--{key}", f"{value}"]
+                if value else
+                [f"--{key}"]
+            )
         ]
 
         log.debug("Generated command: %s", cmd)
