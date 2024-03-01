@@ -79,7 +79,7 @@ class TestIntegration(AsyncHTTPTestCase):
                 'main_workflow_path': "socks",
                 'environment': {'NXF_TEMP': '/tmp/'},
                 "pipeline_parameters": {
-                    "input": "{input_samplesheet}",
+                    "input": "{input_samplesheet_path}",
                 },
             },
         }
@@ -206,7 +206,7 @@ class TestIntegration(AsyncHTTPTestCase):
 
     def test_start_job_with_input_samplesheet(self):
         body = {
-            "input_samplesheet": "test,test",
+            "input_samplesheet_content": "test,test",
         }
         response = self.fetch(
             self.get_url('/api/1.0/jobs/start/socks_samplesheet/foo_runfolder'),

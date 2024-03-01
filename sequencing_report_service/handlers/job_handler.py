@@ -115,7 +115,7 @@ class JobStartHandler(BaseRestHandler):
             {"link": "http://localhost:9999/api/1.0/jobs/130"}
 
         This endpoint also support the following parameters:
-            - `input_samplesheet`: content of the nf-core input samplesheet to
+            - `input_samplesheet_content`: content of the nf-core input samplesheet to
             input to the pipeline
             - `ext_args`: extra arguments to pass to the pipeline
         """
@@ -126,7 +126,7 @@ class JobStartHandler(BaseRestHandler):
             job_id = self.runner_service.start(
                     pipeline,
                     runfolder_path=runfolder_path,
-                    input_samplesheet=request_data.get("input_samplesheet", ""),
+                    input_samplesheet_content=request_data.get("input_samplesheet_content", ""),
                     ext_args=request_data.get("ext_args", "").split(" "),
                     )
             self.set_status(status_code=ACCEPTED)
