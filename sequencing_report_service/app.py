@@ -26,7 +26,6 @@ from sequencing_report_service.repositiories.job_repo import JobRepository
 from sequencing_report_service.repositiories.reports_repo import ReportsRepository
 from sequencing_report_service.repositiories.runfolder_repo import RunfolderRepository
 from sequencing_report_service.exceptions import ConfigurationError
-from sequencing_report_service.nextflow import NextflowCommandGenerator
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ def routes(**kwargs):
     """
     return [
         url(r"/api/1.0/version", VersionHandler, name="version", kwargs=kwargs),
-        url(r"/api/1.0/jobs/start/(?!.*\/)(.*)$", JobStartHandler, name="job_start", kwargs=kwargs),
+        url(r"/api/1.0/jobs/start/(\w+)/(?!.*\/)(.*)$", JobStartHandler, name="job_start", kwargs=kwargs),
         url(r"/api/1.0/jobs/stop/(\d+)$", JobStopHandler, name="job_stop", kwargs=kwargs),
         url(r"/api/1.0/jobs/(\d+)$", OneJobHandler, name="one_job", kwargs=kwargs),
         url(r"/api/1.0/jobs/$", ManyJobHandler, name="many_jobs", kwargs=kwargs),
@@ -111,12 +110,12 @@ def configure_routes(config):
     session_factory = scoped_session(sessionmaker())
     session_factory.configure(bind=engine)
 
-    nextflow_command_generator = NextflowCommandGenerator(config['nextflow_config'])
-
     job_repo_factory = functools.partial(JobRepository, session_factory=session_factory)
-    local_runner_service = LocalRunnerService(job_repo_factory,
-                                              nextflow_command_generator,
-                                              config['nextflow_log_dirs'])
+    local_runner_service = LocalRunnerService(
+        job_repo_factory,
+        config['pipeline_config_dir'],
+        config['nextflow_log_dirs'],
+    )
 
     monitored_dirs = get_key_from_config(config, 'monitored_directories')
     runfolder_repo = RunfolderRepository(monitored_dirs)

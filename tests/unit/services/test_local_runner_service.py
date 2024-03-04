@@ -1,5 +1,4 @@
 
-import pytest
 
 import asyncio
 import mock
@@ -7,19 +6,15 @@ import tempfile
 import os
 import time
 
+import pytest
+
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.models.db_models import Job, State
 
 from tests.test_utils import MockJobRepository
-from tests.test_utils import create_mock_nextflow_job_factory
 
 
 class TestLocalRunnerService(object):
-
-    @pytest.fixture
-    def nextflow_cmd_generator(self):
-        return create_mock_nextflow_job_factory()
-
     @pytest.fixture
     def job_repo_factory(self):
         data = []
@@ -33,40 +28,55 @@ class TestLocalRunnerService(object):
         return tempfile.mkdtemp()
 
     @pytest.mark.asyncio
+    @mock.patch(
+        "sequencing_report_service.services.local_runner_service.nextflow_command",
+        return_value={
+            "command": ["nextflow", "run", "socks"],
+            "environment": {},
+        },
+    )
     async def test_start(
             self,
-            nextflow_cmd_generator,
+            mock_nextflow_command,
             job_repo_factory,
             nextflow_log_dirs,
             ):
+        pipeline = "seqreports"
         runfolder = 'foo_runfolder'
         local_runner_service = LocalRunnerService(
             job_repo_factory,
-            nextflow_cmd_generator,
+            "/path/to/config/dir",
             nextflow_log_dirs,
         )
-        command, environment = nextflow_cmd_generator.command(runfolder).values()
 
         with mock.patch("subprocess.Popen"):
-            job_id = local_runner_service.start(runfolder)
+            job_id = local_runner_service.start(pipeline, runfolder)
 
         assert isinstance(local_runner_service.get_job(job_id), Job)
 
     @pytest.mark.asyncio
+    @mock.patch(
+        "sequencing_report_service.services.local_runner_service.nextflow_command",
+        return_value={
+            "command": ["nextflow", "run", "socks"],
+            "environment": {},
+        },
+    )
     async def test_stop(
             self,
-            nextflow_cmd_generator,
+            mock_nextflow_command,
             job_repo_factory,
             nextflow_log_dirs
             ):
+        pipeline = "seqreports"
         runfolder = 'foo_runfolder'
         local_runner_service = LocalRunnerService(
             job_repo_factory,
-            nextflow_cmd_generator,
+            "/path/to/config/dir",
             nextflow_log_dirs,
         )
         with mock.patch("subprocess.Popen"):
-            job_id = local_runner_service.start(runfolder)
+            job_id = local_runner_service.start(pipeline, runfolder)
             time.sleep(1)
             stopped_id = local_runner_service.stop(job_id)
 
@@ -76,13 +86,12 @@ class TestLocalRunnerService(object):
     @pytest.mark.asyncio
     async def test_start_process(
             self,
-            nextflow_cmd_generator,
             job_repo_factory,
             nextflow_log_dirs
             ):
         local_runner_service = LocalRunnerService(
             job_repo_factory,
-            nextflow_cmd_generator,
+            "/path/to/config/dir",
             nextflow_log_dirs,
         )
 
@@ -104,13 +113,12 @@ class TestLocalRunnerService(object):
     @pytest.mark.asyncio
     async def test_start_process_fail(
             self,
-            nextflow_cmd_generator,
             job_repo_factory,
             nextflow_log_dirs
             ):
         local_runner_service = LocalRunnerService(
             job_repo_factory,
-            nextflow_cmd_generator,
+            "/path/to/config/dir",
             nextflow_log_dirs,
         )
 

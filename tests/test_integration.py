@@ -41,6 +41,7 @@ class TestIntegration(AsyncHTTPTestCase):
 
     def get_app(self):
         src_path = (Path(__file__) / '..' / '..').resolve()
+
         app_config = {
             'port': 9999,
             'db_connection_string': f'sqlite:///{self.db_file_path.name}',
@@ -50,22 +51,55 @@ class TestIntegration(AsyncHTTPTestCase):
             'reports_dir': str(src_path / 'tests/resources/reports'),
             'monitored_directories': [str(src_path / 'tests/resources/')],
             'nextflow_log_dirs': self.nextflow_log_dirs,
-            'nextflow_config': {
+            'pipeline_config_dir': f'{self.config_dir}/pipeline_config/',
+        }
+
+        pipeline_configs = {
+            "seqreports": {
                 'main_workflow_path': str(src_path / 'seqreports/main.nf'),
-                'nf_config': str(src_path / 'seqreports/nextflow.config'),
-                'nf_profile': 'singularity,snpseq,test',
                 'environment': {'NXF_TEMP': '/tmp/'},
-                'parameters': {
+                'nextflow_parameters': {
+                    'config': str(src_path / 'seqreports/nextflow.config'),
+                    'profile': 'singularity,snpseq,test',
+                },
+                'pipeline_parameters': {
                     # This is only a placeholder because the service won't
-                    # accept an empty paramter list
-                    'hello': '${DEFAULT:runfolder_path}',
-                }
-            }
+                    # accept an empty parameter list
+                    'hello': '{runfolder_path}',
+                },
+            },
+            "socks": {
+                'main_workflow_path': "socks",
+                'environment': {'NXF_TEMP': '/tmp/'},
+                "pipeline_parameters": {
+                    "style": "ascii",
+                },
+            },
+            "socks_samplesheet": {
+                'main_workflow_path': "socks",
+                'environment': {'NXF_TEMP': '/tmp/'},
+                "pipeline_parameters": {
+                    "input": "{input_samplesheet_path}",
+                },
+            },
         }
 
         with open(Path(self.config_dir) / "app.config", 'w') as app_config_file:
             app_config_file.write(yaml.dump(app_config))
 
+        Path(app_config["pipeline_config_dir"]).mkdir(exist_ok=True)
+
+        for name, config in pipeline_configs.items():
+            with open(
+                        Path(self.config_dir) / "pipeline_config" / f"{name}.yml",
+                        'w'
+                    ) as pipeline_config_file:
+                pipeline_config_file.write(yaml.dump(config))
+
+        shutil.copyfile(
+            src_path / "config" / "pipeline_config" / "schema.json",
+            Path(app_config["pipeline_config_dir"]) / "schema.json"
+        )
         shutil.copy(src_path / 'config/logger.config', self.config_dir)
 
         app_svc = AppService.create(
@@ -85,7 +119,7 @@ class TestIntegration(AsyncHTTPTestCase):
     @gen_test(timeout=120)
     def test_start_job(self):
         response = yield self.http_client.fetch(
-            self.get_url('/api/1.0/jobs/start/foo_runfolder'),
+            self.get_url('/api/1.0/jobs/start/seqreports/foo_runfolder'),
             method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
         status_link = json.loads(response.body).get('link', None)
@@ -113,7 +147,7 @@ class TestIntegration(AsyncHTTPTestCase):
         status_links = []
         for _ in range(2):
             response = self.fetch(
-                '/api/1.0/jobs/start/foo_runfolder',
+                '/api/1.0/jobs/start/seqreports/foo_runfolder',
                 method='POST', body=json.dumps({}))
             self.assertEqual(response.code, 202)
             status_link = json.loads(response.body).get('link', None)
@@ -134,9 +168,83 @@ class TestIntegration(AsyncHTTPTestCase):
                 f'/api/1.0/jobs/stop/{job_id}',
                 method='POST', body=json.dumps({}))
 
+    def test_start_job_missing_pipeline(self):
+        response = self.fetch(
+            self.get_url('/api/1.0/jobs/start/fake_pipeline/foo_runfolder'),
+            method='POST', body=json.dumps({}))
+        self.assertEqual(response.code, 404)
+
+    def test_start_job_with_extra_args(self):
+        body = {
+            "ext_args": "--style emoji",
+        }
+        response = self.fetch(
+            self.get_url('/api/1.0/jobs/start/socks/foo_runfolder'),
+            method='POST', body=json.dumps(body))
+        self.assertEqual(response.code, 202)
+        status_link = json.loads(response.body).get('link', None)
+        self.assertTrue(status_link)
+        status_response = self.fetch(status_link)
+        self.assertEqual(status_response.code, 200)
+        status_response_body = json.loads(status_response.body)
+        self.assertTrue(status_response_body.get('job_id'))
+        self.assertTrue(status_response_body.get('state'))
+
+        while status_response_body["state"] in [
+                State.NONE.value,
+                State.PENDING.value,
+                State.READY.value,
+                State.STARTED.value,
+                ]:
+            status_response = self.fetch(status_link)
+            self.assertEqual(status_response.code, 200)
+            status_response_body = json.loads(status_response.body)
+            time.sleep(1)
+
+        self.assertEqual(status_response_body["state"], State.DONE.value)
+        self.assertTrue("🧦" in status_response_body["log"])
+
+    def test_start_job_with_input_samplesheet(self):
+        body = {
+            "input_samplesheet_content": "test,test",
+        }
+        response = self.fetch(
+            self.get_url('/api/1.0/jobs/start/socks_samplesheet/foo_runfolder'),
+            method='POST', body=json.dumps(body))
+        self.assertEqual(response.code, 202)
+        status_link = json.loads(response.body).get('link', None)
+        self.assertTrue(status_link)
+        status_response = self.fetch(status_link)
+        self.assertEqual(status_response.code, 200)
+        status_response_body = json.loads(status_response.body)
+        self.assertTrue(status_response_body.get('job_id'))
+        self.assertTrue(status_response_body.get('state'))
+
+        while status_response_body["state"] in [
+                State.NONE.value,
+                State.PENDING.value,
+                State.READY.value,
+                State.STARTED.value,
+                ]:
+            status_response = self.fetch(status_link)
+            self.assertEqual(status_response.code, 200)
+            status_response_body = json.loads(status_response.body)
+            time.sleep(1)
+
+        src_path = (Path(__file__) / '..' / '..').resolve()
+        os.remove(src_path / "tests/resources/foo_runfolder/socks_samplesheet_samplesheet.csv")
+
+        self.assertEqual(status_response_body["state"], State.DONE.value)
+        self.assertTrue(
+            "socks_samplesheet_samplesheet.csv"
+            in " ".join(status_response_body["command"])
+        )
+
     def test_stop_job(self):
         # First start the job
-        response = self.fetch('/api/1.0/jobs/start/foo_runfolder', method='POST', body=json.dumps({}))
+        response = self.fetch(
+            '/api/1.0/jobs/start/seqreports/foo_runfolder',
+            method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
         status_link = json.loads(response.body).get('link', None)
         self.assertTrue(status_link)

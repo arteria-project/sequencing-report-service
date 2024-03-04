@@ -2,106 +2,198 @@
 Module dealing with interacting with Nextflow
 """
 
+import copy
 import logging
-import configparser
 import datetime
 from pathlib import Path
-
-from sequencing_report_service.exceptions import NextflowConfigError
+import json
+import jsonschema
+import yaml
 
 log = logging.getLogger(__name__)
 
 
-# pylint: disable=R0903
-# Intentionally disabling R0903 too-few-public-methods error to allow for NextflowCommandGenerator
-class NextflowCommandGenerator():
+def nextflow_command(
+    pipeline,
+    runfolder_path,
+    config_dir,
+    input_samplesheet_content="",
+    ext_args=None,
+):
     """
-    This is a factory to generate commands to start Nextflow. It assumes
-    that it has a setup which contains a value called RUNFOLDER_REPLACE.
-    This value can then be substituted when generating commands to run
-    on different runfolders.
-    """
+    Generate a Nextflow command according to parameters specified in
+    a configuration file. The file should be named after the pipeline eg.
+    `pipeline_name.yml`.
 
-    def __init__(self, config_dict):
-        """
-        :param: config_dict a dict containing the configuration for the class
-        """
+    The following variables in the config file as well as in the input
+    samplesheet will be interpolated with the parameters passed in to this
+    function:
+    - {runfolder_name}
+    - {runfolder_path}
+    - {current_year}
+    - {input_samplesheet_path}
+
+    Parameters
+    ----------
+    pipeline: str
+        pipeline to use, there must be a corresponding {pipeline}.yml file in
+        the config directory
+    runfolder_path: str
+        path to runfolder to process
+    config_dir: str
+        path to directory containing the pipeline config files
+    input_samplesheet_content: str
+        content of the pipeline's input samplesheet
+    ext_args: [str]
+        list of extra arguments to append to the command. These will override
+        the arguments defined in the config file
+
+    Returns
+    -------
+        command_with_env: dict
+    """
+    raw_config = get_config(config_dir, pipeline)
+    input_samplesheet_content = (
+        input_samplesheet_content
+        or raw_config.get("input_samplesheet_content", "")
+    )
+    defaults = build_defaults(
+        pipeline,
+        runfolder_path,
+        input_samplesheet_content
+    )
+    config = interpolate_variables(raw_config, defaults)
+
+    env = config.get("environment", {})
+    cmd = [
+        'nextflow',
+        'run', config['main_workflow_path'],
+    ]
+
+    cmd += [
+        arg
+        for key, value in config.get("nextflow_parameters", {}).items()
+        for arg in ([f"-{key}", f"{value}"] if value else [f"-{key}"])
+    ]
+
+    cmd += [
+        arg
+        for key, value in config.get("pipeline_parameters", {}).items()
+        for arg in ([f"--{key}", f"{value}"] if value else [f"--{key}"])
+    ]
+
+    if ext_args:
+        cmd += ext_args
+
+    log.debug("Generated command: %s", cmd)
+
+    return {"command": cmd, "environment": env}
+
+
+def get_config(config_dir, pipeline):
+    """
+    Load and validate the config file for the requested pipeline.
+
+    Parameters
+    ----------
+    config_dir: str
+        path to directory containing the config files
+    pipeline: str
+        pipeline to load
+
+    Returns
+    -------
+        config: dict
+    """
+    config_dir = Path(config_dir)
+    try:
+        with open(config_dir / f"{pipeline}.yml", "r") as config_file:
+            config = yaml.safe_load(config_file.read())
+        with open(config_dir / "schema.json", "r") as pipeline_config_schema:
+            schema = json.load(pipeline_config_schema)
+        jsonschema.validate(config, schema)
+    except (FileNotFoundError, jsonschema.ValidationError):
+        log.exception('')
+        raise
+
+    return config
+
+
+def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
+    """
+    Fetch default values to be used with `interpolate_variables`.
+
+    This will also write down the content of the input samplesheet to a file
+    in the runfolder and set its path as one of the default fields.
+
+    Parameters
+    ----------
+    pipeline: str
+        pipeline to use
+    runfolder_path: str
+        path to the runfolder to process
+    input_samplesheet_content: str
+        content of the input samplesheet that will be given to the nextflow
+        pipeline.
+
+    Returns
+    -------
+    defaults: dict
+    """
+    runfolder_path = Path(runfolder_path)
+    defaults = {
+        "current_year": datetime.datetime.now().year,
+        "runfolder_path": str(runfolder_path),
+        "runfolder_name": runfolder_path.name,
+    }
+
+    if input_samplesheet_content:
         try:
-            self._cmd = ['nextflow', '-config',
-                         config_dict['nf_config'],
-                         'run',
-                         config_dict['main_workflow_path'],
-                         '-profile',
-                         config_dict['nf_profile']]
-            if not config_dict.get('parameters'):
-                raise NextflowConfigError("The parameters to the nextflow job was empty.")
-            self._raw_params = config_dict['parameters']
-            self._config_dict = config_dict
-        except KeyError as exc:
-            log.error(exc)
-            raise NextflowConfigError(exc) from exc
-        except NextflowConfigError as exc:
-            log.error(exc)
-            raise exc
+            input_samplesheet_content = input_samplesheet_content.format(**defaults)
+        except KeyError:
+            log.exception('')
+            raise
 
-    def _construct_nf_param_list(self, runfolder_path):
-        """
-        Read the parameters part of the dict and use it to generate a list
-        of parameters and their values.
-        :param: runfolder_path path to the runfolder to process
-        """
+        input_samplesheet_path = runfolder_path / f"{pipeline}_samplesheet.csv"
+        with open(input_samplesheet_path, "w") as f:
+            f.write(input_samplesheet_content)
+        defaults["input_samplesheet_path"] = str(input_samplesheet_path)
 
-        # This uses the variable interpolation capablities of the ConfigParser
-        # to replace variables setup in the config. Creating a new dict is necessary
-        # to conform to the standard format required by the Python config parser.
-        # /JD 2018-04-03
-        defaults = {'runfolder_path': str(runfolder_path),
-                    'runfolder_name': runfolder_path.name,
-                    'current_year': datetime.datetime.now().year}
-        conf = configparser.ConfigParser(
-                defaults=defaults,
-                interpolation=configparser.ExtendedInterpolation())
-        params_as_conf_dict = {'nextflow_config': self._raw_params}
-        conf.read_dict(params_as_conf_dict)
+    return defaults
 
-        lst = []
-        for key, value in conf['nextflow_config'].items():
-            # This check is necessary to ensure that the default values
-            # are not also output here. /JD 2019-04-03
-            if key in self._raw_params.keys():
-                lst += [f"--{key}", f"{value}"]
 
-        return lst
+def interpolate_variables(config, defaults):
+    """
+    Interpolate variables from the `config` dictionary` with the values from
+    `default`: values defined as `{variable_name}` will be replaced by the
+    value at `variable_name` in the `default` dictionary.
 
-    def _construct_environment(self, runfolder_path):
-        """
-        Interpolates default values in the environment config
-        """
-        defaults = {'runfolder_path': str(runfolder_path),
-                    'runfolder_name': runfolder_path.name,
-                    'current_year': datetime.datetime.now().year}
-        conf = configparser.ConfigParser(
-                defaults=defaults,
-                interpolation=configparser.ExtendedInterpolation())
-        conf.optionxform = str
-        env_as_conf_dict = {'environment': self._config_dict.get('environment')}
-        conf.read_dict(env_as_conf_dict)
+    Parameters
+    ----------
+    config: dict
+        dict where values need to be interpolated
+    defaults: dict
+        dict containing the new values
 
-        return {
-            key: conf['environment'][key]
-            for key in env_as_conf_dict['environment']
-        }
+    Returns
+    -------
+    config: dict
+        dictionaries with interpolated variables
+    """
+    config = copy.deepcopy(config)
+    try:
+        for section in [
+                    "environment",
+                    "pipeline_parameters",
+                    "nextflow_parameters",
+                ]:
+            if section in config:
+                for key, value in config[section].items():
+                    config[section][key] = value.format(**defaults)
+    except KeyError:
+        # This may happen if some format strings contain keys that are not in
+        # `defaults`.
+        log.exception('')
+        raise
 
-    def command(self, runfolder):
-        """
-        Return a list containing the command to run with the specified runfolder
-        inserted at the configured path.
-        :param: runfolder path the the runfolder to run command on.
-        """
-        if not isinstance(runfolder, Path):
-            runfolder = Path(runfolder)
-        cmd = self._cmd + self._construct_nf_param_list(runfolder)
-        env_config = self._construct_environment(runfolder)
-        nf_command = {'command': cmd, 'environment': env_config}
-        log.debug("Generated command: %s", nf_command)
-        return nf_command
+    return config
