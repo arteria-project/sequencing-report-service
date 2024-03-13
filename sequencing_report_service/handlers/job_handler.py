@@ -12,6 +12,7 @@ from arteria.web.handlers import BaseRestHandler
 
 from sequencing_report_service.handlers import ACCEPTED, NOT_FOUND, FORBIDDEN
 from sequencing_report_service.exceptions import UnableToStopJob, RunfolderNotFound
+from sequencing_report_service import __version__ as version
 
 
 class OneJobHandler(BaseRestHandler):
@@ -43,6 +44,7 @@ class OneJobHandler(BaseRestHandler):
         job = self.runner_service.get_job(job_id)
         if job:
             job_as_dicts = job.to_dict()
+            job_as_dicts["version"] = version
             self.write_object(job_as_dicts)
         else:
             raise HTTPError(NOT_FOUND)
@@ -91,7 +93,7 @@ class ManyJobHandler(BaseRestHandler):
         """
         jobs = self.runner_service.get_jobs()
         jobs_as_dicts = list(map(lambda job: job.to_dict(), jobs))
-        self.write_object({"jobs": jobs_as_dicts})
+        self.write_object({"jobs": jobs_as_dicts, "version": version})
 
 
 class JobStartHandler(BaseRestHandler):
@@ -135,7 +137,8 @@ class JobStartHandler(BaseRestHandler):
                     "link":
                         f"{self.request.protocol}://"
                         f"{self.request.host}"
-                        f"{self.reverse_url('one_job', job_id)}"
+                        f"{self.reverse_url('one_job', job_id)}",
+                    'version': version,
                 }
             )
         except (RunfolderNotFound, FileNotFoundError) as exc:
@@ -177,6 +180,10 @@ class JobStopHandler(BaseRestHandler):
         except UnableToStopJob:
             self.set_status(status_code=FORBIDDEN)
 
-        self.write_object({'link': '{}://{}{}'.format(self.request.protocol,
-                                                      self.request.host,
-                                                      self.reverse_url('one_job', job_id))})
+        self.write_object({
+            "link":
+                f"{self.request.protocol}://"
+                f"{self.request.host}"
+                f"{self.reverse_url('one_job', job_id)}",
+            'version': version,
+        })
