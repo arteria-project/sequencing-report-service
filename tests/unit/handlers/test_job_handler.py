@@ -12,6 +12,7 @@ from sequencing_report_service.app import routes
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.runfolder_repo import RunfolderRepository
 from sequencing_report_service.models.db_models import Job, State
+from sequencing_report_service import __version__ as version
 
 
 class TestJobHandler(AsyncHTTPTestCase):
@@ -24,7 +25,6 @@ class TestJobHandler(AsyncHTTPTestCase):
         mock_runner_service.start = mock.MagicMock(return_value=job.job_id)
         mock_runner_service.stop = mock.MagicMock(return_value=job)
 
-        mock_path = Path('/foo')
         mock_runfolder_repo = mock.create_autospec(RunfolderRepository)
         mock_runfolder_repo.get_runfolder = mock.MagicMock(return_value=mock)
 
@@ -34,10 +34,14 @@ class TestJobHandler(AsyncHTTPTestCase):
     def test_get_jobs(self):
         response = self.fetch('/api/1.0/jobs/')
         self.assertEqual(response.code, 200)
-        resp_dict = json.loads(response.body)['jobs'][0]
-        self.assertEqual(resp_dict['command'], ['foo'])
-        self.assertEqual(resp_dict['job_id'], 1)
-        self.assertEqual(resp_dict['state'], 'pending')
+        resp_dict = json.loads(response.body)
+
+        self.assertEqual(resp_dict['version'], version)
+
+        jobs_dict = resp_dict['jobs'][0]
+        self.assertEqual(jobs_dict['command'], ['foo'])
+        self.assertEqual(jobs_dict['job_id'], 1)
+        self.assertEqual(jobs_dict['state'], 'pending')
 
     def test_get_job(self):
         response = self.fetch('/api/1.0/jobs/1')
@@ -46,16 +50,28 @@ class TestJobHandler(AsyncHTTPTestCase):
         self.assertEqual(resp_dict['command'], ['foo'])
         self.assertEqual(resp_dict['job_id'], 1)
         self.assertEqual(resp_dict['state'], 'pending')
+        self.assertEqual(resp_dict['version'], version)
 
     def test_start_job(self):
         response = self.fetch('/api/1.0/jobs/start/foo/bar', method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
-        self.assertDictEqual(json.loads(response.body),
-                             {'link':
-                              'http://127.0.0.1:{}/api/1.0/jobs/{}'.format(self.get_http_port(), 1)})
+        self.assertDictEqual(
+            json.loads(response.body),
+            {
+                'link': 'http://127.0.0.1:{}/api/1.0/jobs/{}'.format(
+                    self.get_http_port(), 1),
+                'version': version,
+            }
+        )
 
     def test_stop_job(self):
         response = self.fetch('/api/1.0/jobs/stop/1', method='POST', body=json.dumps({}))
         self.assertEqual(response.code, 202)
-        self.assertDictEqual(json.loads(response.body),
-                             {'link': 'http://127.0.0.1:{}/api/1.0/jobs/{}'.format(self.get_http_port(), 1)})
+        self.assertDictEqual(
+            json.loads(response.body),
+            {
+                'link': 'http://127.0.0.1:{}/api/1.0/jobs/{}'.format(
+                    self.get_http_port(), 1),
+                'version': version,
+            }
+        )
