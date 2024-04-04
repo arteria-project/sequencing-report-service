@@ -17,7 +17,7 @@
       "type": "object",
       "additionalProperties": {"type": "string"}
     },
-    "input_samplesheet": { "type": "string" }
+    "input_samplesheet_content": { "type": "string" }
   },
   "additionalProperties": false
 }
