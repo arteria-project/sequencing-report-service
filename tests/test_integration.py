@@ -60,7 +60,7 @@ class TestIntegration(AsyncHTTPTestCase):
                 'environment': {'NXF_TEMP': '/tmp/'},
                 'nextflow_parameters': {
                     'config': str(src_path / 'seqreports/nextflow.config'),
-                    'profile': 'singularity,snpseq,test',
+                    'profile': 'singularity,dev,test',
                 },
                 'pipeline_parameters': {
                     # This is only a placeholder because the service won't
