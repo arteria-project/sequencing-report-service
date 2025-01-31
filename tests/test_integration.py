@@ -71,6 +71,9 @@ class TestIntegration(AsyncHTTPTestCase):
             "socks": {
                 'main_workflow_path': "socks",
                 'environment': {'NXF_TEMP': '/tmp/'},
+                "nextflow_parameters": {
+                    "revision": "master",
+                },
                 "pipeline_parameters": {
                     "style": "ascii",
                 },
