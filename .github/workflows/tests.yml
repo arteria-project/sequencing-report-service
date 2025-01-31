@@ -21,9 +21,11 @@ jobs:
           pip install -r requirements/dev .
           npm install -g pajv
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
+        uses: nf-core/setup-nextflow@v2
         with:
-          version: "22.10.6"
+          version: "24.04.2"
+      - name: Test nextflow
+        run: nextflow run -revision main socks --style ascii
       - name: Install apptainer
         run: |
           sudo add-apt-repository -y ppa:apptainer/ppa
