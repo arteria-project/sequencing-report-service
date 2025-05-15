@@ -4,4 +4,4 @@
 
 __author__ = """SNP&SEQ Technology Platform, National Genomics Infrastructure, Uppsala University"""
 __email__ = 'dataoperations@medsci.uu.se'
-__version__ = '1.5.2'
+__version__ = '1.5.3-rc1'
