@@ -19,6 +19,7 @@ def nextflow_command(
     config_dir,
     input_samplesheet_content="",
     ext_args=None,
+    demultiplexer=None,
 ):
     """
     Generate a Nextflow command according to parameters specified in
@@ -32,6 +33,7 @@ def nextflow_command(
     - {runfolder_path}
     - {current_year}
     - {input_samplesheet_path}
+    - {demultiplexer}
 
     Parameters
     ----------
@@ -47,6 +49,8 @@ def nextflow_command(
     ext_args: [str]
         list of extra arguments to append to the command. These will override
         the arguments defined in the config file
+    demultiplexer: str
+        Used in 'demultiplex' pipeline to select name of demultiplexer e.g bcltfastq or bclconvert 
 
     Returns
     -------
@@ -84,6 +88,9 @@ def nextflow_command(
 
     if ext_args:
         cmd += ext_args
+    
+    if demultiplexer and pipeline == 'demultiplex':
+        cmd += [f"--demultiplexer {demultiplexer}"]
 
     log.debug("Generated command: %s", cmd)
 
