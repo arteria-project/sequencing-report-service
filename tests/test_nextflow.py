@@ -70,6 +70,7 @@ def test_nextflow_command(config_dir, runfolder):
         '--name', runfolder.name,
         '--year', str(datetime.datetime.now().year),
         "--params", "foo",
+        "--demultiplexer", "None"
     ]
 
     assert result['environment'] == {

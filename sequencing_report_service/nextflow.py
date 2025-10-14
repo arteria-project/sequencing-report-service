@@ -89,8 +89,7 @@ def nextflow_command(
     if ext_args:
         cmd += ext_args
     
-    if demultiplexer and pipeline == 'demultiplex':
-        cmd += [f"--demultiplexer {demultiplexer}"]
+    cmd += [word for word in f"--demultiplexer {demultiplexer}".split(" ")]
 
     log.debug("Generated command: %s", cmd)
 

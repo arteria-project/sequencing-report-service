@@ -224,7 +224,7 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(status_response_body["state"], State.DONE.value)
         self.assertTrue("🧦" in status_response_body["log"])
         self.assertTrue(
-            "demultiplexer" not in " ".join(status_response_body["command"])
+            "demultiplexer" in " ".join(status_response_body["command"])
         )
 
 
@@ -261,6 +261,10 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(status_response_body["state"], State.DONE.value)
         self.assertTrue(
             "socks_samplesheet_samplesheet.csv"
+            in " ".join(status_response_body["command"])
+        )
+        self.assertTrue(
+            "--demultiplexer bcl2fastq"
             in " ".join(status_response_body["command"])
         )
     
