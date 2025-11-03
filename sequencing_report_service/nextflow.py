@@ -19,7 +19,7 @@ def nextflow_command(
     config_dir,
     input_samplesheet_content="",
     ext_args=None,
-    demultiplexer=None,
+    pipeline_parameters=None
 ):
     """
     Generate a Nextflow command according to parameters specified in
@@ -49,8 +49,8 @@ def nextflow_command(
     ext_args: [str]
         list of extra arguments to append to the command. These will override
         the arguments defined in the config file
-    demultiplexer: str
-        Used in 'demultiplex' pipeline to select name of demultiplexer e.g bcltfastq or bclconvert 
+    pipeline_parameters: dict
+        parameters to pass to the pipeline config file
 
     Returns
     -------
@@ -64,7 +64,8 @@ def nextflow_command(
     defaults = build_defaults(
         pipeline,
         runfolder_path,
-        input_samplesheet_content
+        input_samplesheet_content,
+        pipeline_parameters
     )
     config = interpolate_variables(raw_config, defaults)
 
@@ -89,8 +90,6 @@ def nextflow_command(
     if ext_args:
         cmd += ext_args
     
-    cmd += [word for word in f"--demultiplexer {demultiplexer}".split(" ")]
-
     log.debug("Generated command: %s", cmd)
 
     return {"command": cmd, "environment": env}
@@ -125,7 +124,7 @@ def get_config(config_dir, pipeline):
     return config
 
 
-def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
+def build_defaults(pipeline, runfolder_path, input_samplesheet_content, pipeline_parameters):
     """
     Fetch default values to be used with `interpolate_variables`.
 
@@ -141,6 +140,8 @@ def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
     input_samplesheet_content: str
         content of the input samplesheet that will be given to the nextflow
         pipeline.
+    pipeline_parameters: dict
+        parameters to pass to the pipeline config file
 
     Returns
     -------
@@ -164,6 +165,10 @@ def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
         with open(input_samplesheet_path, "w") as f:
             f.write(input_samplesheet_content)
         defaults["input_samplesheet_path"] = str(input_samplesheet_path)
+
+    if pipeline_parameters:
+        for key, value in pipeline_parameters.items():
+            defaults[key] = value
 
     return defaults
 

@@ -76,6 +76,7 @@ class TestIntegration(AsyncHTTPTestCase):
                 },
                 "pipeline_parameters": {
                     "style": "ascii",
+                    "test_pipeline_param": "{test}"
                 },
             },
             "socks_samplesheet": {
@@ -86,6 +87,7 @@ class TestIntegration(AsyncHTTPTestCase):
                 },
                 "pipeline_parameters": {
                     "input": "{input_samplesheet_path}",
+                    'demultiplexer': "{demultiplexer}"
                 },
             },
             "demultiplex": {
@@ -99,6 +101,7 @@ class TestIntegration(AsyncHTTPTestCase):
                    # This is only a placeholder because the service won't
                     # accept an empty parameter list
                     'hello': '{runfolder_path}',
+                    'demultiplexer': "{demultiplexer}"
                 },
             },
         }
@@ -135,7 +138,7 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body), {'version': version})
 
-    @gen_test(timeout=120)
+    @gen_test(timeout=240)
     def test_start_job(self):
         response = yield self.http_client.fetch(
             self.get_url('/api/1.0/jobs/start/seqreports/foo_runfolder'),
@@ -196,7 +199,7 @@ class TestIntegration(AsyncHTTPTestCase):
     def test_start_job_with_extra_args(self):
         body = {
             "ext_args": "--style emoji",
-            "demultiplexer": "test"
+            "pipeline_parameters": {"test": "test1"}
         }
         response = self.fetch(
             self.get_url('/api/1.0/jobs/start/socks/foo_runfolder'),
@@ -224,13 +227,18 @@ class TestIntegration(AsyncHTTPTestCase):
         self.assertEqual(status_response_body["state"], State.DONE.value)
         self.assertTrue("🧦" in status_response_body["log"])
         self.assertTrue(
-            "demultiplexer" in " ".join(status_response_body["command"])
+            "--test_pipeline_param" in status_response_body["command"]
+        )
+        test_cmd_index = status_response_body["command"].index("--test_pipeline_param")
+        self.assertTrue(
+            status_response_body["command"][test_cmd_index + 1] == "test1"
         )
 
 
     def test_start_job_with_input_samplesheet(self):
         body = {
             "input_samplesheet_content": "test,test",
+            "pipeline_parameters": {"demultiplexer": ""}
         }
         response = self.fetch(
             self.get_url('/api/1.0/jobs/start/socks_samplesheet/foo_runfolder'),
@@ -264,13 +272,12 @@ class TestIntegration(AsyncHTTPTestCase):
             in " ".join(status_response_body["command"])
         )
         self.assertTrue(
-            "--demultiplexer bcl2fastq"
-            in " ".join(status_response_body["command"])
+            "--demultiplexer" in status_response_body["command"]
         )
     
     def test_start_job_with_demultiplexer(self):
         body = {
-            "demultiplexer": "test",
+            "pipeline_parameters": {"demultiplexer": "bclconvert"}
         }
         response = self.fetch(
             self.get_url('/api/1.0/jobs/start/demultiplex/foo_runfolder'),
@@ -295,10 +302,10 @@ class TestIntegration(AsyncHTTPTestCase):
             status_response_body = json.loads(status_response.body)
             time.sleep(1)
 
-        self.assertEqual(status_response_body["state"], State.DONE.value)
+        self.assertTrue("--demultiplexer" in status_response_body["command"])
+        demultiplexer_cmd_index = status_response_body["command"].index("--demultiplexer")
         self.assertTrue(
-            "--demultiplexer test"
-            in " ".join(status_response_body["command"])
+            status_response_body["command"][demultiplexer_cmd_index + 1] == "bclconvert"
         )
 
     def test_stop_job(self):

@@ -70,7 +70,6 @@ def test_nextflow_command(config_dir, runfolder):
         '--name', runfolder.name,
         '--year', str(datetime.datetime.now().year),
         "--params", "foo",
-        "--demultiplexer", "None"
     ]
 
     assert result['environment'] == {
@@ -105,13 +104,15 @@ def test_build_defaults(runfolder):
     defaults = build_defaults(
         "foo_pipeline",
         str(runfolder),
-        "runfolder_data,{runfolder_name}"
+        "runfolder_data,{runfolder_name}",
+        {"demultiplexer":"bcl2fastq"}
     )
     assert defaults == {
         "current_year": datetime.datetime.now().year,
         "runfolder_path": str(runfolder),
         "runfolder_name": runfolder.name,
         "input_samplesheet_path": f"{runfolder}/foo_pipeline_samplesheet.csv",
+        "demultiplexer": "bcl2fastq",
     }
     with open(defaults["input_samplesheet_path"], 'r') as f:
         assert f.read() == f"runfolder_data,{runfolder.name}"

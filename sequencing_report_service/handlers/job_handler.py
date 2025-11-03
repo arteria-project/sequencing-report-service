@@ -120,8 +120,6 @@ class JobStartHandler(BaseRestHandler):
             - `input_samplesheet_content`: content of the nf-core input samplesheet to
             input to the pipeline
             - `ext_args`: extra arguments to pass to the pipeline
-            - 'demultiplexer': Used in 'demultiplex' pipeline to select name of 
-            demultiplexer e.g bcltfastq or bclconvert etc
         """
         try:
             request_data = self.body_as_object()
@@ -132,7 +130,7 @@ class JobStartHandler(BaseRestHandler):
                 runfolder_path=runfolder_path,
                 input_samplesheet_content=request_data.get("input_samplesheet_content", ""),
                 ext_args=request_data.get("ext_args", "").split(" "),
-                demultiplexer=request_data.get("demultiplexer", "bcl2fastq"),
+                pipeline_parameters=request_data.get("pipeline_parameters", {}),
             )
             self.set_status(status_code=ACCEPTED)
             self.write_object(
