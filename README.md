@@ -1,26 +1,55 @@
 Sequencing Report Service
 =========================
 
-Service producing and displaying sequencing reports.
+Service used to start nextflow pipelines with passed config variables 
 
-Features
+Current nextflow pipelines that can be started by 
 --------
 
-* Produce reports on sequencing data
-* Display these reports
+* [nf-core/demultiplex](https://nf-co.re/demultiplex/)
+* [nf-core/sarek](https://nf-co.re/sarek/)
 
-More information
+
+Local Development
 ----------------
 
-For more information see the docs. These can be generated using:
-`make docs`. This command should create the docs and open them in a new
-browser setting. For every release of the repo there should also be a
-corresponding artifact for download containing all the docs.
+#### Dependency management with UV
 
-Credits
--------
+We use UV for fast and reliable Python dependency management. To get started:
 
-This package was created with Cookiecutter and the `audreyr/cookiecutter-pypackage` project template.
+1. Install UV:
+```bash
+pip install uv
+```
 
-- Cookiecutter: https://github.com/audreyr/cookiecutter
-- `audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+2. Create and activate virtual environment:
+```bash
+uv venv
+source .venv/bin/activate  # On Unix/macOS
+# or
+.venv\Scripts\activate  # On Windows
+```
+
+3. Install dependencies: (Use '--dev' for dev group )
+```bash
+uv sync --all-groups  # Install all project dependencies from the lockfile
+```
+
+```bash
+uv add <'package'>  # Add dependencies to the project and added to the project's pyproject.toml file.
+```
+
+```bash
+uv remove <'package'>  # Removes dependencies in the project and removes in the project's pyproject.toml file.
+```
+
+#### Dependency Locking
+
+We use UV's lockfile functionality to ensure reproducible builds:
+NOTE: `uv add` and `uv remove` usually edit both pyproject.toml and uv.lock but 
+one can run the command below if you delete the lock file to regenerate
+
+1. Generate/update lockfile:
+```bash
+uv lock
+```
