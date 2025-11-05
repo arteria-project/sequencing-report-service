@@ -63,8 +63,6 @@ class TestIntegration(AsyncHTTPTestCase):
                     'profile': 'singularity,dev,test',
                 },
                 'pipeline_parameters': {
-                    # This is only a placeholder because the service won't
-                    # accept an empty parameter list
                     'hello': '{runfolder_path}',
                 },
             },
@@ -87,7 +85,6 @@ class TestIntegration(AsyncHTTPTestCase):
                 },
                 "pipeline_parameters": {
                     "input": "{input_samplesheet_path}",
-                    'demultiplexer': "{demultiplexer}"
                 },
             },
             "demultiplex": {
@@ -98,9 +95,6 @@ class TestIntegration(AsyncHTTPTestCase):
                     'profile': 'singularity,dev,test',
                 },
                 'pipeline_parameters': {
-                   # This is only a placeholder because the service won't
-                    # accept an empty parameter list
-                    'hello': '{runfolder_path}',
                     'demultiplexer': "{demultiplexer}"
                 },
             },
@@ -199,7 +193,7 @@ class TestIntegration(AsyncHTTPTestCase):
     def test_start_job_with_extra_args(self):
         body = {
             "ext_args": "--style emoji",
-            "pipeline_parameters": {"test": "test1"}
+            "config_parameters": {"test": "test1"}
         }
         response = self.fetch(
             self.get_url('/api/1.0/jobs/start/socks/foo_runfolder'),
@@ -238,7 +232,6 @@ class TestIntegration(AsyncHTTPTestCase):
     def test_start_job_with_input_samplesheet(self):
         body = {
             "input_samplesheet_content": "test,test",
-            "pipeline_parameters": {"demultiplexer": ""}
         }
         response = self.fetch(
             self.get_url('/api/1.0/jobs/start/socks_samplesheet/foo_runfolder'),
@@ -271,13 +264,10 @@ class TestIntegration(AsyncHTTPTestCase):
             "socks_samplesheet_samplesheet.csv"
             in " ".join(status_response_body["command"])
         )
-        self.assertTrue(
-            "--demultiplexer" in status_response_body["command"]
-        )
     
     def test_start_job_with_demultiplexer(self):
         body = {
-            "pipeline_parameters": {"demultiplexer": "bclconvert"}
+            "config_parameters": {"demultiplexer": "bclconvert"}
         }
         response = self.fetch(
             self.get_url('/api/1.0/jobs/start/demultiplex/foo_runfolder'),

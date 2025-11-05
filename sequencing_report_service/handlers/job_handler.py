@@ -130,7 +130,7 @@ class JobStartHandler(BaseRestHandler):
                 runfolder_path=runfolder_path,
                 input_samplesheet_content=request_data.get("input_samplesheet_content", ""),
                 ext_args=request_data.get("ext_args", "").split(" "),
-                pipeline_parameters=request_data.get("pipeline_parameters", {}),
+                config_params=request_data.get("config_parameters", {}),
             )
             self.set_status(status_code=ACCEPTED)
             self.write_object(
