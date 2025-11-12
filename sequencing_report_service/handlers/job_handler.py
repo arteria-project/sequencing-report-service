@@ -12,7 +12,9 @@ from arteria.web.handlers import BaseRestHandler
 
 from sequencing_report_service.handlers import ACCEPTED, NOT_FOUND, FORBIDDEN
 from sequencing_report_service.exceptions import UnableToStopJob, RunfolderNotFound
-from sequencing_report_service import __version__ as version
+import importlib.metadata
+
+version = importlib.metadata.version("sequencing-report-service")
 
 
 class OneJobHandler(BaseRestHandler):
@@ -124,7 +126,7 @@ class JobStartHandler(BaseRestHandler):
         try:
             request_data = self.body_as_object()
             runfolder_path = self.runfolder_repo.get_runfolder(runfolder)
-
+            
             job_id = self.runner_service.start(
                 pipeline,
                 runfolder_path=runfolder_path,

@@ -15,7 +15,9 @@ from tornado.web import Application
 from sequencing_report_service.app import configure_routes
 from sequencing_report_service.models.db_models import State
 
-from sequencing_report_service import __version__ as version
+import importlib.metadata
+
+version = importlib.metadata.version("sequencing-report-service")
 
 
 class TestIntegration(AsyncHTTPTestCase):

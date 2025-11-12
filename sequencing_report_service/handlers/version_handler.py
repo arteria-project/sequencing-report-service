@@ -7,7 +7,9 @@ Get the version of the service
 """
 from arteria.web.handlers import BaseRestHandler
 
-from sequencing_report_service import __version__ as version
+import importlib.metadata
+
+version = importlib.metadata.version("sequencing-report-service")
 
 
 class VersionHandler(BaseRestHandler):

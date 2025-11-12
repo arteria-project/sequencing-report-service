@@ -4,4 +4,4 @@
 
 __author__ = """SNP&SEQ Technology Platform, National Genomics Infrastructure, Uppsala University"""
 __email__ = 'dataoperations@medsci.uu.se'
-__version__ = '1.6.0-rc1'
+# __version__ is managed in pyproject.toml file
