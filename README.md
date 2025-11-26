@@ -78,12 +78,24 @@ input_samplesheet_content: |
 ```
 
 
+Installing sequencing-report-service
+----------------
+1. Clone the repo
+
+2. Install the project and it's dependencies
+We use [UV](https://docs.astral.sh/uv/) project manager i.e
+```bash
+uv sync --all-groups --locked   # this will also create a venv that can be ativated by 'source .venv/bin/activate'
+```
+Look at example of using  UV in the 'Local Development' section below
+
+
 Local Development
 ----------------
 
 #### Dependency management with UV
 
-We use UV for fast and reliable Python dependency management. To get started:
+We use [UV](https://docs.astral.sh/uv/) for fast and reliable Python dependency management. To get started:
 
 1. Install UV:
 ```bash

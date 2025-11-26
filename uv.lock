@@ -1136,7 +1136,7 @@ wheels = [
 [[package]]
 name = "sequencing-report-service"
 version = "1.6.0rc1"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "alembic" },
     { name = "arteria" },
