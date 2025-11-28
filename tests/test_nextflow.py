@@ -100,23 +100,25 @@ def test_config_not_found(config_dir):
         get_config(config_dir, "erronous_pipeline")
 
 
-def test_build_defaults(runfolder):
-    defaults = build_defaults(
+def test_build_config_variables(runfolder):
+    config_values = build_config_variables(
         "foo_pipeline",
         str(runfolder),
-        "runfolder_data,{runfolder_name}"
+        "runfolder_data,{runfolder_name}",
+        {"demultiplexer":"bcl2fastq"}
     )
-    assert defaults == {
+    assert config_values == {
         "current_year": datetime.datetime.now().year,
         "runfolder_path": str(runfolder),
         "runfolder_name": runfolder.name,
         "input_samplesheet_path": f"{runfolder}/foo_pipeline_samplesheet.csv",
+        "demultiplexer": "bcl2fastq",
     }
-    with open(defaults["input_samplesheet_path"], 'r') as f:
+    with open(config_values["input_samplesheet_path"], 'r') as f:
         assert f.read() == f"runfolder_data,{runfolder.name}"
 
 def test_interpolate_variables(config):
-    defaults = {
+    config_values = {
         "current_year": 2024,
         "runfolder_path": "/path/to/runfolder",
         "runfolder_name": "runfolder",
@@ -141,6 +143,6 @@ def test_interpolate_variables(config):
         }
     }
 
-    test_config = interpolate_variables(config, defaults)
+    test_config = interpolate_variables(config, config_values)
 
     assert test_config == exp_config

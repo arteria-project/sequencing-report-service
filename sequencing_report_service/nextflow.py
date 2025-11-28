@@ -19,6 +19,7 @@ def nextflow_command(
     config_dir,
     input_samplesheet_content="",
     ext_args=None,
+    config_params=None,
 ):
     """
     Generate a Nextflow command according to parameters specified in
@@ -32,6 +33,7 @@ def nextflow_command(
     - {runfolder_path}
     - {current_year}
     - {input_samplesheet_path}
+    - {demultiplexer}
 
     Parameters
     ----------
@@ -47,6 +49,8 @@ def nextflow_command(
     ext_args: [str]
         list of extra arguments to append to the command. These will override
         the arguments defined in the config file
+    config_params: dict
+        parameters to pass to the pipeline config file
 
     Returns
     -------
@@ -57,12 +61,13 @@ def nextflow_command(
         input_samplesheet_content
         or raw_config.get("input_samplesheet_content", "")
     )
-    defaults = build_defaults(
+    config_values = build_config_variables(
         pipeline,
         runfolder_path,
-        input_samplesheet_content
+        input_samplesheet_content,
+        config_params,
     )
-    config = interpolate_variables(raw_config, defaults)
+    config = interpolate_variables(raw_config, config_values)
 
     env = config.get("environment", {})
     cmd = [
@@ -84,7 +89,7 @@ def nextflow_command(
 
     if ext_args:
         cmd += ext_args
-
+    
     log.debug("Generated command: %s", cmd)
 
     return {"command": cmd, "environment": env}
@@ -119,7 +124,7 @@ def get_config(config_dir, pipeline):
     return config
 
 
-def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
+def build_config_variables(pipeline, runfolder_path, input_samplesheet_content, config_params):
     """
     Fetch default values to be used with `interpolate_variables`.
 
@@ -135,13 +140,15 @@ def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
     input_samplesheet_content: str
         content of the input samplesheet that will be given to the nextflow
         pipeline.
+    config_params: dict
+        parameters to pass to the pipeline config file
 
     Returns
     -------
-    defaults: dict
+    config_values: dict
     """
     runfolder_path = Path(runfolder_path)
-    defaults = {
+    config_values = {
         "current_year": datetime.datetime.now().year,
         "runfolder_path": str(runfolder_path),
         "runfolder_name": runfolder_path.name,
@@ -149,7 +156,7 @@ def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
 
     if input_samplesheet_content:
         try:
-            input_samplesheet_content = input_samplesheet_content.format(**defaults)
+            input_samplesheet_content = input_samplesheet_content.format(**config_values)
         except KeyError:
             log.exception('')
             raise
@@ -157,12 +164,16 @@ def build_defaults(pipeline, runfolder_path, input_samplesheet_content):
         input_samplesheet_path = runfolder_path / f"{pipeline}_samplesheet.csv"
         with open(input_samplesheet_path, "w") as f:
             f.write(input_samplesheet_content)
-        defaults["input_samplesheet_path"] = str(input_samplesheet_path)
+        config_values["input_samplesheet_path"] = str(input_samplesheet_path)
 
-    return defaults
+    if config_params:
+        for key, value in config_params.items():
+            config_values[key] = value
+
+    return config_values
 
 
-def interpolate_variables(config, defaults):
+def interpolate_variables(config, config_values):
     """
     Interpolate variables from the `config` dictionary` with the values from
     `default`: values defined as `{variable_name}` will be replaced by the
@@ -172,7 +183,7 @@ def interpolate_variables(config, defaults):
     ----------
     config: dict
         dict where values need to be interpolated
-    defaults: dict
+    config_values: dict
         dict containing the new values
 
     Returns
@@ -189,10 +200,10 @@ def interpolate_variables(config, defaults):
                 ]:
             if section in config:
                 for key, value in config[section].items():
-                    config[section][key] = value.format(**defaults)
+                    config[section][key] = value.format(**config_values)
     except KeyError:
         # This may happen if some format strings contain keys that are not in
-        # `defaults`.
+        # `config_values`.
         log.exception('')
         raise
 

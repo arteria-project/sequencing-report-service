@@ -18,6 +18,7 @@ pipeline_parameters:
   checkqc_config: /etc/checkqc/config.yaml
   result_dir: "{runfolder_path}/reports"
   script_dir: ./seqreports/bin/
+  demultiplexer: "{demultiplexer}"
 nextflow_parameters:
   config: ./seqreports/config/nextflow.config
   profile: singularity,snpseq

@@ -109,6 +109,7 @@ class LocalRunnerService:
         runfolder_path,
         input_samplesheet_content="",
         ext_args=None,
+        config_params=None,
     ):
         """
         Start a new job for the specified runfolder
@@ -116,6 +117,8 @@ class LocalRunnerService:
         :param runfolder_path: path to the runfolder to process
         :param input_samplesheet_content: content of the input samplesheet
         :param ext_args: extra args to append to the nextflow command
+        :param config_params: parameters to pass to the pipeline config file
+
         :return: the job id of the started job
         """
         with self._job_repo_factory() as job_repo:
@@ -125,6 +128,7 @@ class LocalRunnerService:
                 self._pipeline_config_dir,
                 input_samplesheet_content,
                 ext_args,
+                config_params,
             )
             job_id = job_repo.add_job(command_with_env=nf_cmd).job_id
         log.debug("calling start_process with id %s" % str(job_id))

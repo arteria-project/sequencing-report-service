@@ -12,7 +12,9 @@ from sequencing_report_service.app import routes
 from sequencing_report_service.services.local_runner_service import LocalRunnerService
 from sequencing_report_service.repositiories.runfolder_repo import RunfolderRepository
 from sequencing_report_service.models.db_models import Job, State
-from sequencing_report_service import __version__ as version
+import importlib.metadata
+
+version = importlib.metadata.version("sequencing-report-service")
 
 
 class TestJobHandler(AsyncHTTPTestCase):
